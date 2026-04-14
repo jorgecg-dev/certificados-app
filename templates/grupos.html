@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<div class="card-form">
+    <h2>🔍 BUSCAR GRUPO</h2>
+
+    <form method="get" class="grid-form">
+
+        <div class="form-group">
+            <input type="text" name="nombre" placeholder="Nombre"
+                   value="{{ nombre_buscar }}">
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="promocion" placeholder="Promoción"
+                   value="{{ promocion_buscar }}">
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="sede" placeholder="Sede"
+                   value="{{ sede_buscar }}">
+        </div>
+
+        <button type="submit" class="btn-guardar">Buscar</button>
+
+    </form>
+</div>
+
+
+{% for g in grupos %}
+
+<div class="card-form">
+
+    <h3 class="titulo-grupo">{{ g.nombre }} - {{ g.promocion }} - {{ g.sede }}</h3>
+
+    <a class="btn-guardar"
+       href="/descargar_qr_grupo/{{ g.nombre }}/{{ g.promocion }}/{{ g.sede }}">
+        📥 Descargar QRs
+    </a>
+
+    <table class="tabla-pro">
+        <tr>
+            <th>Nombre</th>
+            <th>DNI</th>
+            <th>Ver</th>
+            <th>Eliminar</th>
+        </tr>
+
+        {% for a in g.alumnos %}
+        <tr>
+            <td>{{ a.nombre }}</td>
+            <td>{{ a.dni }}</td>
+
+            <td>
+                <a class="btn-ver" href="/verificar/{{ a.dni }}">
+                    Ver
+                </a>
+            </td>
+
+            <td>
+                <a class="btn-eliminar"
+                   href="/eliminar_programa/{{ a.dni }}/{{ g.nombre }}/{{ g.promocion }}/{{ g.sede }}">
+                    Eliminar
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+
+</div>
+
+{% endfor %}
+
+{% endblock %}

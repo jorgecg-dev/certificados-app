@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
+
+        .sidebar {
+            width: 220px;
+            height: 100vh;
+            background: linear-gradient(#0b1a3a, #1e3c72);
+            color: white;
+            position: fixed;
+        }
+
+        .sidebar h2 {
+            padding: 15px;
+            font-size: 16px;
+        }
+
+        .menu {
+            padding: 10px;
+        }
+
+        .menu a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .menu a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .submenu {
+            display: none;
+            padding-left: 15px;
+        }
+
+        .content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .logo-principal {
+            text-align: center;
+            margin-top: 600px;
+        }
+
+        .logo-principal img {
+            width: 200px;
+            opacity: 0.9;
+        }
+
+        .logos-convenios {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logos-convenios img {
+            width: 65px;
+            height: 65px;
+            object-fit: contain;
+
+            background: white;
+            padding: 8px;
+            border-radius: 10px;
+
+            opacity: 0.8;
+            transition: 0.3s;
+
+            box-shadow: 0px 3px 8px rgba(0,0,0,0.15);
+        }
+
+        .logos-convenios img:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .content {
+            margin-left: 220px;
+            padding: 20px;
+            min-height: 100vh;
+
+            background: linear-gradient(
+                rgba(255,255,255,0.85),
+                rgba(255,255,255,0.85)
+            ),
+            url("/static/fondo.png");
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* =========================
+        FORMULARIO BONITO
+        ========================= */
+
+        .card-form {
+            max-width: 500px;
+            margin: 40px auto;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .card-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border: 1px solid #007bff;
+            outline: none;
+        }
+
+        .btn-guardar {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-guardar:hover {
+            background: #0056b3;
+        }
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            align-items: center;
+        }
+
+        .tabla-pro {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .tabla-pro th {
+            background: #1e3c72;
+            color: white;
+            padding: 10px;
+        }
+
+        .tabla-pro td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tabla-pro tr:hover {
+            background: #f1f5ff;
+        }
+
+        .btn-ver {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .btn-eliminar {
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .titulo-grupo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .card-form {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .form-simple {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .lista-eventos {
+            list-style: none;
+            padding: 0;
+        }
+
+        .lista-eventos li {
+            background: #f4f6f9;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lista-eventos li:hover {
+            background: #e9eef7;
+        }
+
+        .input-full {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .form-group select {
+            width: 100% !important;
+            display: block;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            background: #28a745;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-contenido {
+            background: white;
+            width: 420px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.3);
+
+            animation: aparecer 0.3s ease;
+        }
+
+        @keyframes aparecer {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .cerrar {
+            float: right;
+            font-size: 22px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .cerrar:hover {
+            color: red;
+        }
+
+        /* INPUTS */
+        .input-full {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .input-full:focus {
+            border: 1px solid #007bff;
+            outline: none;
+        }
+
+        /* BOTÓN */
+        .btn-guardar {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-guardar:hover {
+            transform: scale(1.02);
+        }
+        
+    </style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>📊 SISTEMA CERTIFICADOS GBC</h2>
+
+    <div class="menu">
+
+        <!-- REGISTRO ALUMNO -->
+        <a onclick="toggle('registro')">📁 Registro Alumno</a>
+        <div id="registro" class="submenu">
+            <a href="/registrar">Individual</a>
+            <a href="/carga_masiva">Masivo</a>
+        </div>
+
+        <!-- BUSQUEDA -->
+        <a onclick="toggle('busqueda')">🔍 Búsqueda</a>
+        <div id="busqueda" class="submenu">
+            <a href="/buscar">Alumno</a>
+            <a href="/grupos">Grupos</a>
+        </div>
+
+        <!-- REGISTRO EVENTO -->
+        <a href="/crear_evento">📌 Registrar Evento</a>
+
+        <!-- CERTIFICADOS -->
+        <a onclick="toggle('certificados')">📄 Certificados</a>
+        <div id="certificados" class="submenu">
+            <a href="/generar_certificados">Una Cara</a>
+            <a href="/certificados_doble">Doble Cara</a>
+
+        </div>
+
+
+
+    </div>
+</div>
+
+<div class="content">
+
+    <div class="topbar">
+        {{ usuario }} | <a href="/logout">Cerrar sesión</a>
+    </div>
+
+    {% block contenido %}
+    {% endblock %}
+
+</div>
+
+<script>
+function toggle(id){
+    let x = document.getElementById(id);
+    x.style.display = (x.style.display === "block") ? "none" : "block";
+}
+</script>
+
+<div id="toast" class="toast"></div>
+
+<script>
+function mostrarToast(mensaje) {
+    const toast = document.getElementById("toast");
+    toast.innerText = mensaje;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2500);
+}
+</script>
+
+</body>
+</html>

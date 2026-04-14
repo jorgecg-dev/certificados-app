@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<div class="card-form">
+
+    <h2>BUSCAR ALUMNO</h2>
+
+    <form method="POST">
+
+        <div class="form-group">
+            <input type="text" name="dni" placeholder="Ingrese DNI" required>
+        </div>
+
+        <button type="submit" class="btn-guardar">Buscar</button>
+
+    </form>
+
+</div>
+
+{% endblock %}

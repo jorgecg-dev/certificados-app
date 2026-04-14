@@ -1,0 +1,116 @@
+[
+    {
+        "nombre": "JORGE GILMAR CORONADO GUTIERREZ",
+        "dni": "11111111",
+        "programas": [
+            {
+                "tipo": "curso",
+                "nombre": "PRIMEROS AUXILIOS",
+                "promocion": "145",
+                "sede": "TUMBES",
+                "modalidad": "PRESENCIAL",
+                "duracion": "9 MESES",
+                "fecha_inicio": "2026-04-01",
+                "fecha_fin": "2026-04-07",
+                "horas": "750 HORAS",
+                "pdf": "",
+                "qr": "11111111.png"
+            }
+        ]
+    },
+    {
+        "nombre": "HERNANDEZ GONZALEZ MIRIAM ESTRELLITA DE JESUS ",
+        "dni": "47835356",
+        "programas": [
+            {
+                "tipo": "PROGRAMA",
+                "nombre": "AUXILIAR EN EDUCACION INICIAL",
+                "promocion": "187",
+                "sede": "TUMBES",
+                "modalidad": "PRESENCIALES",
+                "duracion": "9 MESES",
+                "fecha_inicio": "",
+                "fecha_fin": "",
+                "horas": "900 HORAS ACADEMICAS",
+                "pdf": "",
+                "qr": "47835356.png"
+            }
+        ]
+    },
+    {
+        "nombre": "VIERA ROSAS MONICA LISBETH ",
+        "dni": "46914690",
+        "programas": [
+            {
+                "tipo": "PROGRAMA",
+                "nombre": "AUXILIAR EN EDUCACION INICIAL",
+                "promocion": "187",
+                "sede": "TUMBES",
+                "modalidad": "PRESENCIALES",
+                "duracion": "9 MESES",
+                "fecha_inicio": "",
+                "fecha_fin": "",
+                "horas": "900 HORAS ACADEMICAS",
+                "pdf": "",
+                "qr": "46914690.png"
+            }
+        ]
+    },
+    {
+        "nombre": "AVILA ROSILLO PATRICIA ABIGAIL ",
+        "dni": "60466271",
+        "programas": [
+            {
+                "tipo": "PROGRAMA",
+                "nombre": "AUXILIAR EN EDUCACION INICIAL",
+                "promocion": "187",
+                "sede": "TUMBES",
+                "modalidad": "PRESENCIALES",
+                "duracion": "9 MESES",
+                "fecha_inicio": "",
+                "fecha_fin": "",
+                "horas": "900 HORAS ACADEMICAS",
+                "pdf": "",
+                "qr": "60466271.png"
+            }
+        ]
+    },
+    {
+        "nombre": "JORGE GILMAR CORONADO GUTIERREZ",
+        "dni": "33333333",
+        "programas": [
+            {
+                "tipo": "PROGRAMA",
+                "nombre": "AUXILIAR DE ENFERMERIA",
+                "promocion": "145",
+                "sede": "TUMBES",
+                "modalidad": "PRESENCIAL",
+                "duracion": "9 MESES",
+                "fecha_inicio": "2026-04-01",
+                "fecha_fin": "2026-04-01",
+                "horas": "750 HORAS",
+                "pdf": "",
+                "qr": "33333333.png"
+            }
+        ]
+    },
+    {
+        "nombre": "JORGE GILMAR CORONADO GUTIERREZ",
+        "dni": "123456789",
+        "programas": [
+            {
+                "tipo": "PROGRAMA",
+                "nombre": "AUXILIAR DE ENFERMERIA",
+                "promocion": "145",
+                "sede": "TUMBES",
+                "modalidad": "PRESENCIAL",
+                "duracion": "9 MESES",
+                "fecha_inicio": "2026-04-01",
+                "fecha_fin": "2026-04-01",
+                "horas": "750 HORAS",
+                "pdf": "",
+                "qr": "123456789.png"
+            }
+        ]
+    }
+]

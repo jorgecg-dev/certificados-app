@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<div class="card-form">
+
+    <h2>REGISTRAR ALUMNO</h2>
+
+    <form id="formAlumno" enctype="multipart/form-data">
+
+        <div class="form-group">
+            <input type="text" name="nombre" placeholder="Nombre completo" required>
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="dni" placeholder="DNI o Carnet" required minlength="8" maxlength="9">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de evento</label>
+            <select name="tipo">
+                <option value="programa">Programa</option>
+                <option value="diplomado">Diplomado</option>
+                <option value="curso">Curso</option>
+                <option value="convencion">Convención</option>
+                <option value="taller">Taller</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Nombre del evento</label>
+            <select name="programa">
+                {% for e in eventos %}
+                    <option value="{{ e.nombre }}">{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="promocion" placeholder="Promoción">
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="sede" placeholder="Sede">
+        </div>
+
+        <div class="form-group">
+            <label>Modalidad</label>
+            <select name="modalidad">
+                <option value="VIRTUAL">Virtual</option>
+                <option value="PRESENCIAL">Presencial</option>
+                <option value="SEMIPRESENCIAL">Semipresencial</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="duracion" placeholder="Duración">
+        </div>
+
+        <div class="form-group">
+            <label>Fecha inicio</label>
+            <input type="date" name="fecha_inicio">
+        </div>
+
+        <div class="form-group">
+            <label>Fecha fin</label>
+            <input type="date" name="fecha_fin">
+        </div>
+
+        <div class="form-group">
+            <input type="text" name="horas" placeholder="Horas">
+        </div>
+
+        <div class="form-group">
+            <label>Subir PDF</label>
+            <input type="file" name="pdf">
+        </div>
+
+        <button type="submit" class="btn-guardar">Guardar</button>
+
+    </form>
+
+</div>
+
+<script>
+document.getElementById("formAlumno").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    fetch("/registrar", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        mostrarToast("✔ " + data.mensaje);
+
+        // LIMPIAR FORMULARIO
+        document.getElementById("formAlumno").reset();
+    });
+});
+</script>
+
+{% endblock %}

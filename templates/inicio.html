@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Certificados</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
+
+        /* CONTENEDOR GENERAL */
+        .inicio-container {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* FONDO */
+        .fondo {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url("/static/fondo.png") center/cover no-repeat;
+        }
+
+        /* OSCURECER FONDO */
+        .overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* CENTRAR TODO */
+        .contenido-inicio {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            height: 100vh;
+        }
+
+        /* TARJETA */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 25px;
+            border-radius: 12px;
+
+            width: 90%;
+            max-width: 400px;
+
+            text-align: center;
+
+            box-shadow: 0px 8px 25px rgba(0,0,0,0.3);
+        }
+
+        /* INPUT */
+        input {
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+            margin-top: 15px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        /* BOTONES */
+        button {
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px
+        }
+
+        button[type="submit"] {
+            background: #007bff;
+        }
+
+        form {
+            margin-top: 15px;
+        }
+
+        .login-btn {
+            background: #28a745;
+            margin-top: 15px;
+        }
+
+        /* LOGO PRINCIPAL */
+        .logo-principal {
+            margin-top: 20px;
+        }
+
+        .logo-principal img {
+            width: 200px;
+        }
+
+        /* LOGOS CONVENIOS */
+        .logos-convenios {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .logos-convenios img {
+            width: 45px;
+            height: 45px;
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 600px) {
+
+            .contenido-inicio {
+                padding: 20px;
+            }
+
+            .card {
+                width: 95%;
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            input {
+                font-size: 16px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+
+            .logo-principal img {
+                width: 150px;
+            }
+
+            .logos-convenios img {
+                width: 40px;
+                height: 40px;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="inicio-container">
+
+    <!-- FONDO -->
+    <div class="fondo"></div>
+    <div class="overlay"></div>
+
+    <!-- CONTENIDO -->
+    <div class="contenido-inicio">
+
+        <div class="card">
+
+            <h2>BUSCAR ALUMNO</h2>
+
+            <form action="/buscar" method="post">
+                <input type="text" name="dni" placeholder="Ingrese DNI o N° Carnet" required>
+                <br>
+                <button type="submit">Buscar</button>
+            </form>
+
+            <a href="/login">
+                <button class="login-btn">Iniciar sesión</button>
+            </a>
+
+            <!-- LOGO PRINCIPAL -->
+            <div class="logo-principal">
+                <img src="/static/logo_principal.png">
+            </div>
+
+            <!-- LOGOS -->
+            <div class="logos-convenios">
+                <img src="/static/logo1.png">
+                <img src="/static/logo2.png">
+                <img src="/static/logo3.png">
+                <img src="/static/logo4.png">
+                <img src="/static/logo5.png">
+                <img src="/static/logo6.png">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

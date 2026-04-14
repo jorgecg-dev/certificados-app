@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<div class="card-form">
+
+    <h2>CARGA MASIVA</h2>
+
+    <form id="formMasivo" enctype="multipart/form-data">
+
+        <div class="form-group">
+            <label>Seleccionar archivo Excel</label>
+            <input type="file" name="archivo" required>
+        </div>
+
+        <button type="submit" class="btn-guardar">SUBIR EXCEL</button>
+
+    </form>
+
+</div>
+
+<script>
+document.getElementById("formMasivo").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    fetch("/carga_masiva", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        mostrarToast("✔ " + data.mensaje);
+
+        // limpiar input file
+        document.getElementById("formMasivo").reset();
+    });
+});
+</script>
+
+{% endblock %}

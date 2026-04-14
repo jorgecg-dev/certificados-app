@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .login-container {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* FONDO */
+        .fondo {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url("/static/fondo.png") center/cover no-repeat;
+        }
+
+        /* OSCURECER FONDO */
+        .overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+        }
+
+        /* CONTENIDO */
+        .contenido-login {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            height: 100vh;
+        }
+
+        /* CUADRO (CARD) */
+        .card {
+            background: rgba(255,255,255,0.9);
+            padding: 35px;
+            border-radius: 12px;
+
+            width: 320px;
+            text-align: center;
+
+            box-shadow: 0px 8px 25px rgba(0,0,0,0.3);
+        }
+
+        /* TITULO */
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        /* INPUTS */
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+
+            border-radius: 5px;
+            border: 1px solid #333;
+            box-sizing: border-box;
+        }
+
+        /* BOTON */
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+
+            box-sizing: border-box;
+
+            background: #007bff;
+            color: white;
+
+            border: none;
+            border-radius: 5px;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 40px; /* espacio para el icono */
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <div class="fondo"></div>
+    <div class="overlay"></div>
+
+    <div class="contenido-login">
+
+        <div class="card">
+
+            <h2>INICIAR SESIÓN</h2>
+
+            <form method="POST">
+
+                <input type="text" name="usuario" placeholder="Usuario" required>
+
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Contraseña" required>
+                    <span class="toggle-password" onclick="togglePassword()">👁️</span>
+                </div>
+
+                <button type="submit">Ingresar</button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function togglePassword() {
+    var input = document.getElementById("password");
+
+    if (input.type === "password") {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
+}
+</script>
+
+</body>
+</html>

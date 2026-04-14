@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Perfil del Alumno</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: Arial;
+    margin: 0;
+    text-align: center;
+
+    background: linear-gradient(
+        rgba(255,255,255,0.9),
+        rgba(255,255,255,0.9)
+    ),
+    url("/static/fondo.png");
+
+    background-size: cover;
+    background-position: center;
+}
+
+.card {
+    background: white;
+    width: 90%;
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+h2 {
+    margin: 0;
+}
+
+h3 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+
+    background: #e9f2ff;
+    color: #1e3c72;
+
+    padding: 12px 15px;
+    border-radius: 10px;
+
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 1px;
+
+    text-align: center;
+    position: relative;
+
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
+}
+
+.programa {
+    background: #f8f9ff;
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: left;
+    border-left: 5px solid #007bff;
+}
+
+.btn {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 8px 12px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+input[type="file"] {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-contenido {
+    background: white;
+    width: 420px;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+.cerrar {
+    float: right;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.input-full {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.btn-guardar {
+    width: 100%;
+    padding: 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+}
+
+.dni {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+}
+
+.acciones-alumno {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn-editar {
+    background: #007bff;
+}
+
+.btn-eliminar {
+    background: #dc3545;
+}
+
+.header-perfil {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.qr-img {
+    width: 110px;
+    max-width: 100%;
+}
+
+@media (max-width: 600px) {
+
+    .card {
+        width: 95%;
+        max-width: 100%;
+        padding: 15px;
+        margin: 20px auto;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    .dni {
+        font-size: 14px;
+    }
+
+    .header-perfil {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .programa {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin-top: 8px;
+        padding: 12px;
+        font-size: 14px
+    }
+
+    .acciones-alumno {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-contenido {
+        width: 90%;
+    }
+
+    input {
+        font-size: 14px;
+    }
+
+    .qr-img {
+    width: 80px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="header-perfil">
+
+<div>
+    <h2>{{ alumno["nombre"] }}</h2>
+    <p class="dni"><strong>DNI:</strong> {{ alumno["dni"] }}</p>
+</div>
+
+<div style="text-align:center;">
+
+{% if alumno["programas"] and alumno["programas"][0]["qr"] %}
+
+    <img src="/qr/{{ alumno['programas'][0]['qr'] }}" class="qr-img">
+
+    <a href="/qr/{{ alumno['programas'][0]['qr'] }}" download class="btn" style="font-size:12px;">
+        Descargar QR
+    </a>
+{% endif %}
+</div>
+
+</div>
+
+{% set categorias = {
+"diplomado": "DIPLOMADOS",
+"programa": "PROGRAMAS",
+"curso": "CURSOS",
+"convencion": "CONVENCIONES",
+"taller": "TALLERES"
+} %}
+
+{% for tipo, titulo in categorias.items() %}
+
+{% set lista = [] %}
+
+{% for prog in alumno["programas"] %}
+{% if prog["tipo"] | lower | trim == tipo | lower | trim %}
+{% set _ = lista.append(prog) %}
+{% endif %}
+{% endfor %}
+
+{% if lista %}
+<h3>{{ titulo }}</h3>
+
+{% for p in lista %}
+
+<div class="programa">
+
+<p><strong>{{ p.nombre }}</strong></p>
+<p>Promoción: {{ p.promocion }}</p>
+<p>Sede: {{ p.sede }}</p>
+<p>Modalidad: {{ p.modalidad }}</p>
+<p>Duración: {{ p.duracion }}</p>
+<p>Inicio: {{ p.fecha_inicio }}</p>
+<p>Fin: {{ p.fecha_fin }}</p>
+<p>Horas: {{ p.horas }}</p>
+
+{% if p.get("pdf") %}
+<a class="btn" href="/{{ p['pdf'] }}" target="_blank">📄 Descargar PDF</a>
+
+{% if session.get("admin") %}
+<form action="/reemplazar_pdf/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}" method="post" enctype="multipart/form-data">
+<input type="file" name="pdf" required>
+<button type="submit" class="btn">🔄 Reemplazar</button>
+</form>
+{% endif %}
+
+{% else %}
+
+{% if session.get("admin") %}
+<form action="/subir_pdf/{{ alumno['dni'] }}/{{ loop.index0 }}" method="post" enctype="multipart/form-data">
+<input type="file" name="pdf" required>
+<button type="submit" class="btn">📤 Subir</button>
+</form>
+{% endif %}
+
+{% endif %}
+
+{% if session.get("admin") %}
+<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+<button onclick="abrirModal(
+'{{ alumno.dni }}',
+'{{ loop.index0 }}',
+'{{ p.nombre }}',
+'{{ p.promocion }}',
+'{{ p.sede }}',
+'{{ p.duracion }}',
+'{{ p.fecha_inicio }}',
+'{{ p.fecha_fin }}',
+'{{ p.horas }}'
+)" class="btn">✏️ Editar</button>
+
+<a href="/eliminar_programa/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}?next=perfil"
+   class="btn"
+   style="background:#dc3545;"
+   onclick="return confirm('¿Eliminar este registro?')">
+   ❌ Eliminar
+</a>
+
+</div>
+{% endif %}
+
+</div>
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+<br>
+
+{% if session.get("admin") %}
+
+<a class="btn" href="/buscar">🔍 Buscar otro alumno</a><br>
+<a class="btn" href="/dashboard">🏠 Volver al inicio</a>
+
+{% else %}
+
+<a class="btn" href="/">🔍 Buscar otro alumno</a><br>
+<a class="btn" href="/">🏠 Volver al inicio</a>
+
+{% endif %}
+
+{% if session.get("admin") %}
+
+<div class="acciones-alumno">
+    <button class="btn btn-editar btn-editar-alumno"
+        data-dni="{{ alumno['dni'] }}"
+        data-nombre="{{ alumno['nombre'] }}">
+        ✏️ Editar alumno
+    </button>
+
+    <a href="/eliminar/{{ alumno['dni'] }}" 
+       class="btn btn-eliminar"
+       onclick="return confirm('¿Seguro que deseas eliminar este alumno?')">
+       🗑️ Eliminar alumno
+    </a>
+</div>
+
+{% endif %}
+
+</div>
+
+<!-- MODAL -->
+<div id="modalEditar" class="modal">
+<div class="modal-contenido">
+<span class="cerrar" onclick="cerrarModal()">&times;</span>
+
+<h3 style="text-align:center;">✏️ Editar Programa</h3>
+
+<form id="formEditar">
+<input type="hidden" name="dni" id="edit_dni">
+<input type="hidden" name="index" id="edit_index">
+
+<input type="text" name="nombre" id="edit_nombre" class="input-full">
+<input type="text" name="promocion" id="edit_promocion" class="input-full">
+<input type="text" name="sede" id="edit_sede" class="input-full">
+<input type="text" name="duracion" id="edit_duracion" class="input-full">
+<input type="date" name="fecha_inicio" id="edit_inicio" class="input-full">
+<input type="date" name="fecha_fin" id="edit_fin" class="input-full">
+<input type="text" name="horas" id="edit_horas" class="input-full">
+
+<input type="hidden" name="nombre_original" id="edit_nombre_original">
+<input type="hidden" name="promocion_original" id="edit_promocion_original">
+<input type="hidden" name="sede_original" id="edit_sede_original">
+
+<button type="submit" class="btn-guardar">Guardar cambios</button>
+</form>
+</div>
+</div>
+
+<div id="modalAlumno" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModalAlumno()">&times;</span>
+
+        <h3 style="text-align:center;">✏️ Editar Alumno</h3>
+
+        <form id="formAlumno">
+
+            <input type="hidden" name="dni_original" id="alumno_dni_original">
+
+            <input type="text" name="dni" id="alumno_dni" 
+                class="input-full" placeholder="DNI"><br><br>
+
+            <input type="text" name="nombre" id="alumno_nombre" 
+                   class="input-full" placeholder="Nombre"><br><br>
+
+            <button type="submit" class="btn-guardar">Guardar cambios</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModal(dni,index,nombre,promocion,sede,duracion,inicio,fin,horas){
+document.getElementById("modalEditar").style.display="flex";
+
+edit_dni.value=dni;
+edit_index.value=index;
+edit_nombre.value=nombre;
+edit_promocion.value=promocion;
+edit_sede.value=sede;
+edit_duracion.value=duracion;
+edit_inicio.value=inicio;
+edit_fin.value=fin;
+edit_horas.value=horas;
+
+// 🔥 CLAVE (esto faltaba)
+document.getElementById("edit_nombre_original").value = nombre;
+document.getElementById("edit_promocion_original").value = promocion;
+document.getElementById("edit_sede_original").value = sede;
+}
+
+function cerrarModal(){
+document.getElementById("modalEditar").style.display="none";
+}
+
+document.getElementById("formEditar").addEventListener("submit",function(e){
+e.preventDefault();
+
+let formData=new FormData(this);
+
+fetch("/editar_programa_ajax",{method:"POST",body:formData})
+.then(r=>r.json())
+.then(d=>{
+if(d.ok){
+alert("✔ Actualizado correctamente");
+cerrarModal();
+setTimeout(()=>location.reload(),800);
+}
+});
+});
+
+window.onclick=function(e){
+let m=document.getElementById("modalEditar");
+if(e.target===m){m.style.display="none";}
+}
+</script>
+
+<script>
+function abrirModalAlumno(dni, nombre){
+    document.getElementById("modalAlumno").style.display = "block";
+
+    document.getElementById("alumno_dni_original").value = dni;
+    document.getElementById("alumno_dni").value = dni;
+    document.getElementById("alumno_nombre").value = nombre;
+    document.getElementById("alumno_nombre").value = nombre;
+}
+
+function cerrarModalAlumno(){
+    document.getElementById("modalAlumno").style.display = "none";
+}
+</script>
+
+<script>
+document.getElementById("formAlumno").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    fetch("/editar_alumno_ajax", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.ok){
+            cerrarModalAlumno();
+            location.reload();
+        }
+    });
+});
+</script>
+
+<script>
+document.querySelectorAll(".btn-editar-alumno").forEach(btn => {
+    btn.addEventListener("click", function(){
+
+        let dni = this.dataset.dni;
+        let nombre = this.dataset.nombre;
+
+        document.getElementById("modalAlumno").style.display = "flex";
+
+        document.getElementById("alumno_dni").value = dni;
+        document.getElementById("alumno_nombre").value = nombre;
+
+        // 🔥 CLAVE (esto faltaba)
+        document.getElementById("alumno_dni_original").value = dni;
+    });
+});
+</script>
+
+</body>
+</html>

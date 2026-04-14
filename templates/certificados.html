@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<div class="card-form">
+
+    <h2>📄 GENERAR CERTIFICADOS</h2>
+
+    <form id="formCertificados" enctype="multipart/form-data">
+
+        <div class="form-group">
+            <label>Evento</label>
+            <select name="evento" class="input-full">
+                {% for e in eventos %}
+                <option value="{{ e.nombre }}">{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Promoción</label>
+            <input type="text" name="promocion" class="input-full" placeholder="Ej: 145">
+        </div>
+
+        <div class="form-group">
+            <label>Sede</label>
+            <input type="text" name="sede" class="input-full" placeholder="Ej: TUMBES">
+        </div>
+
+        <div class="form-group">
+            <label>Modelo de certificado</label>
+            <input type="file" name="modelo" class="input-full">
+        </div>
+
+        <button type="submit" class="btn-guardar">
+            Generar Certificados
+        </button>
+
+    </form>
+
+<div id="loader" style="display:none; text-align:center; margin-top:20px;">
+    <p>⏳ Generando certificados...</p>
+</div>
+
+</div>
+
+<script>
+document.getElementById("formCertificados").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let formData = new FormData(e.target);
+
+    // mostrar loader
+    document.getElementById("loader").style.display = "block";
+
+    fetch("/generar_certificados", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        mostrarToast("✔ " + data.mensaje);
+
+        // ocultar loader
+        document.getElementById("loader").style.display = "none";
+    });
+});
+</script>
+
+{% endblock %}
