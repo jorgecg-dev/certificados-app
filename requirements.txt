@@ -1,7 +1,8 @@
 flask
-psycopg2-binary
-qrcode
-pillow
+psycopg2
 pandas
+qrcode
 reportlab
+pillow
+openpyxl
 gunicorn
