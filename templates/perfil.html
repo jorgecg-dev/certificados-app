@@ -25,14 +25,11 @@ body {
 .card {
     background: white;
     width: 90%;
-    max-width: 520px;
+    max-width: 700px;
     margin: 40px auto;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
-
-    max-height: 85vh;
-    overflow-y: auto;
 }
 
 h2 {
@@ -62,10 +59,11 @@ h3 {
 .programa {
     background: #f8f9ff;
     margin-top: 15px;
-    padding: 15px;
+    padding: 18px;
     border-radius: 10px;
     text-align: left;
     border-left: 5px solid #007bff;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
 }
 
 .btn {
@@ -146,6 +144,14 @@ input[type="file"] {
     justify-content: space-between;
 }
 
+.acciones-finales {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .btn-editar {
     background: #007bff;
 }
@@ -158,7 +164,9 @@ input[type="file"] {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
 .qr-img {
@@ -195,12 +203,17 @@ input[type="file"] {
     }
 
     .btn {
-        display: block;
-        width: 100%;
+        display: inline-block;
+        width: auto;
         text-align: center;
         margin-top: 8px;
-        padding: 12px;
-        font-size: 14px
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .acciones-finales .btn,
+    .acciones-alumno .btn {
+        min-width: 160px;
     }
 
     .acciones-alumno {
@@ -229,24 +242,20 @@ input[type="file"] {
 
 <div class="card">
 
-<div class="header-perfil">
+    <div class="header-perfil">
+        <div>
+            <h2>{{ alumno["nombre"] }}</h2>
+            <p class="dni"><strong>DNI:</strong> {{ alumno["dni"] }}</p>
+        </div>
 
-<div>
-    <h2>{{ alumno["nombre"] }}</h2>
-    <p class="dni"><strong>DNI:</strong> {{ alumno["dni"] }}</p>
-</div>
+        <div style="text-align:center;">
+            <img src="/qr_dinamico/{{ alumno['dni'] }}" class="qr-img">
 
-<div style="text-align:center;">
-
-<div style="text-align:center;">
-    <img src="/qr_dinamico/{{ alumno['dni'] }}" class="qr-img">
-
-    <a href="/qr_dinamico/{{ alumno['dni'] }}" download class="btn" style="font-size:12px;">
-        Descargar QR
-    </a>
-</div>
-
-</div>
+            <a href="/qr_dinamico/{{ alumno['dni'] }}" download class="btn" style="font-size:12px;">
+                Descargar QR
+            </a>
+        </div>
+    </div>
 
 {% set categorias = {
 "diplomado": "DIPLOMADOS",
@@ -335,35 +344,31 @@ input[type="file"] {
 
 <br>
 
+<div class="acciones-finales">
+
 {% if session.get("admin") %}
-
-<a class="btn" href="/buscar">🔍 Buscar otro alumno</a><br>
-<a class="btn" href="/dashboard">🏠 Volver al inicio</a>
-
+    <a class="btn" href="/buscar">🔍 Buscar otro alumno</a>
+    <a class="btn" href="/dashboard">🏠 Volver al inicio</a>
 {% else %}
-
-<a class="btn" href="/">🔍 Buscar otro alumno</a><br>
-<a class="btn" href="/">🏠 Volver al inicio</a>
-
+    <a class="btn" href="/">🔍 Buscar otro alumno</a>
+    <a class="btn" href="/">🏠 Volver al inicio</a>
 {% endif %}
 
 {% if session.get("admin") %}
-
-<div class="acciones-alumno">
     <button class="btn btn-editar btn-editar-alumno"
         data-dni="{{ alumno['dni'] }}"
         data-nombre="{{ alumno['nombre'] }}">
         ✏️ Editar alumno
     </button>
 
-    <a href="/eliminar/{{ alumno['dni'] }}" 
+    <a href="/eliminar/{{ alumno['dni'] }}"
        class="btn btn-eliminar"
        onclick="return confirm('¿Seguro que deseas eliminar este alumno?')">
        🗑️ Eliminar alumno
     </a>
-</div>
-
 {% endif %}
+
+</div>
 
 </div>
 
