@@ -1,15 +1,37 @@
-from flask import Flask, request, render_template, session, redirect, send_file, send_from_directory
+from flask import Flask, request, render_template, session, redirect, send_file, send_from_directory, jsonify
 import psycopg2
 import os
+import urllib.parse as urlparse
 import qrcode
 import zipfile
 import locale
-import unicodedata
 import pandas as pd
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
 from functools import wraps
-from flask import session, redirect
+from PIL import Image, ImageDraw, ImageFont
+from datetime import datetime
+import uuid
+from io import BytesIO
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ruta_fuente = os.path.join(BASE_DIR, "DejaVuSans-Bold.ttf")
+
+PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
+
+def ensure_dirs():
+    os.makedirs(os.path.join(BASE_DIR, "qr"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "certificados"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "temp"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "salida"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "fotos"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "static", "pdfs"), exist_ok=True)
+
+
+ensure_dirs()
+
 
 def login_required(f):
     @wraps(f)
@@ -19,140 +41,121 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def get_connection():
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        raise Exception("DATABASE_URL no está configurado")
+
+    return psycopg2.connect(database_url, sslmode="require")
+
+
 def ejecutar_query(query, params=None, fetch=False):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(query, params or ())
+    try:
+        cur.execute(query, params or ())
 
-    if fetch:
-        data = cur.fetchall()
-    else:
-        data = None
+        data = cur.fetchall() if fetch else None
+        conn.commit()
+        return data
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    except Exception:
+        conn.rollback()
+        raise
 
-    return data
+    finally:
+        cur.close()
+        conn.close()
 
-def get_connection():
-    return psycopg2.connect(os.getenv("DATABASE_URL"))
+
+def quitar_tildes(texto):
+    if not texto:
+        return texto
+
+    reemplazos = {
+        "á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u",
+        "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U"
+    }
+
+    return "".join(reemplazos.get(c, c) for c in texto)
+
+
+def limpiar_texto(texto):
+    if texto is None:
+        return ""
+    return quitar_tildes(str(texto)).upper().strip()
+
 
 def numero_a_letras(n):
     numeros = {
         0: "CERO", 1: "UNO", 2: "DOS", 3: "TRES", 4: "CUATRO",
         5: "CINCO", 6: "SEIS", 7: "SIETE", 8: "OCHO", 9: "NUEVE",
         10: "DIEZ", 11: "ONCE", 12: "DOCE", 13: "TRECE",
-        14: "CATORCE", 15: "QUINCE", 16: "DIECISÉIS",
+        14: "CATORCE", 15: "QUINCE", 16: "DIECISEIS",
         17: "DIECISIETE", 18: "DIECIOCHO", 19: "DIECINUEVE",
         20: "VEINTE"
     }
     return numeros.get(n, str(n))
 
-def quitar_tildes(texto):
-    if not texto:
-        return texto
-
-    resultado = ""
-
-    for c in texto:
-        if c in "áéíóúÁÉÍÓÚ":
-            # quitar tilde manualmente
-            resultado += {
-                "á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u",
-                "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U"
-            }[c]
-        else:
-            resultado += c
-
-    return resultado
-
-def limpiar_texto(texto):
-    if not texto:
-        return texto
-
-    texto = quitar_tildes(texto)
-    return texto.upper().strip()
 
 try:
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-except:
+    locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
+except Exception:
     pass
 
-app = Flask(__name__)
-import secrets
-app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
-
-from PIL import Image, ImageDraw, ImageFont
-from datetime import datetime
-
-def generar_certificado(nombre, qr_path, output_path):
-    from PIL import Image, ImageDraw, ImageFont
-    from datetime import datetime
-    import os
-
-    # Cargar plantilla
-    base = Image.open("certificado_base.jpg")
+def generar_certificado(nombre, dni_qr, output_path):
+    ruta_base = os.path.join(BASE_DIR, "certificado_base.jpg")
+    base = Image.open(ruta_base)
     draw = ImageDraw.Draw(base)
 
-    # Fuentes
-    font_fecha = ImageFont.truetype("arial.ttf", 20)
+    font_fecha = ImageFont.truetype(ruta_fuente, 30)
 
-    # ======================
-    # NOMBRE NEGRITA 
-    # ======================
     max_width = base.width - 200
-
     font_size = 60
 
     while True:
-        font_nombre = ImageFont.truetype("timesi.ttf", font_size)
+        font_nombre = ImageFont.truetype(ruta_fuente, font_size)
         bbox = draw.textbbox((0, 0), nombre, font=font_nombre)
         text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
 
-        if text_width <= max_width:
+        if text_width <= max_width or font_size <= 20:
             break
 
         font_size -= 2
 
-    # centrar
     x_nombre = (base.width - text_width) / 2
     y_nombre = 400
 
-    # SIMULAR NEGRITA 
     draw.text((x_nombre, y_nombre), nombre, fill="black", font=font_nombre)
-    draw.text((x_nombre+1, y_nombre), nombre, fill="black", font=font_nombre)
-    draw.text((x_nombre, y_nombre+1), nombre, fill="black", font=font_nombre)
+    draw.text((x_nombre + 1, y_nombre), nombre, fill="black", font=font_nombre)
+    draw.text((x_nombre, y_nombre + 1), nombre, fill="black", font=font_nombre)
 
-    # =========================
-    # FECHA (DERECHA)
-    # =========================
     fecha = datetime.now().strftime("%d de %B del %Y")
     texto_fecha = f"Piura, {fecha}"
 
     bbox_fecha = draw.textbbox((0, 0), texto_fecha, font=font_fecha)
     w_fecha = bbox_fecha[2] - bbox_fecha[0]
 
-    x_fecha = base.width - w_fecha - 60   # margen derecho
+    x_fecha = base.width - w_fecha - 60
     y_fecha = 650
 
     draw.text((x_fecha, y_fecha), texto_fecha, fill="black", font=font_fecha)
 
-    # =========================
-    # QR (ABAJO IZQUIERDA)
-    # =========================
-    qr_completo = os.path.join("qr", qr_path)
+    if PUBLIC_BASE_URL:
+        url_qr = f"{PUBLIC_BASE_URL}/verificar/{dni_qr}"
+    else:
+        url_qr = f"http://127.0.0.1:5000/verificar/{dni_qr}"
 
-    if os.path.exists(qr_completo):
-        qr = Image.open(qr_completo).resize((140, 140))
-        base.paste(qr, (30, base.height - 170))
+    qr = qrcode.make(url_qr).convert("RGB")
+    qr = qr.resize((140, 140))
+    base.paste(qr, (30, base.height - 170))
 
-    # Guardar certificado
+    os.makedirs(os.path.join(BASE_DIR, "certificados"), exist_ok=True)
+
     rgb = base.convert("RGB")
-    os.makedirs("certificados", exist_ok=True)
-
     rgb.save(output_path, "PDF")
 
 def generar_certificados_grupo(nombre_evento, promocion, sede):
@@ -160,11 +163,8 @@ def generar_certificados_grupo(nombre_evento, promocion, sede):
     conn = get_connection()
     cur = conn.cursor()
 
-    # =========================
-    # OBTENER ALUMNOS + PROGRAMAS
-    # =========================
     cur.execute("""
-        SELECT a.nombre, a.dni, p.qr
+        SELECT a.nombre, a.dni
         FROM alumnos a
         JOIN programas p ON a.dni = p.dni
         WHERE p.nombre = %s
@@ -174,7 +174,7 @@ def generar_certificados_grupo(nombre_evento, promocion, sede):
 
     datos = cur.fetchall()
 
-    for nombre, dni, qr in datos:
+    for nombre, dni in datos:
 
         # =========================
         # GENERAR NOMBRE ARCHIVO
@@ -185,7 +185,7 @@ def generar_certificados_grupo(nombre_evento, promocion, sede):
         # =========================
         # GENERAR CERTIFICADO
         # =========================
-        generar_certificado(nombre, qr, output)
+        generar_certificado(nombre, dni, output)
 
         # =========================
         # GUARDAR PDF EN BD
@@ -255,96 +255,95 @@ def buscar():
 def registrar():
     if not session.get("admin"):
         return "<h3>Acceso restringido</h3>"
-    
+
     if request.method == "POST":
-        nombre = limpiar_texto(request.form["nombre"])
-        dni = request.form["dni"]
-        tipo = limpiar_texto(request.form["tipo"])
-        programa = limpiar_texto(request.form["programa"])
-        promocion = request.form["promocion"].upper()
-        sede = limpiar_texto(request.form["sede"])
-        modalidad = request.form["modalidad"].strip().upper()
-        duracion = limpiar_texto(request.form["duracion"])
-        fecha_inicio = request.form["fecha_inicio"]
-        fecha_fin = request.form["fecha_fin"]
-        horas = limpiar_texto(request.form["horas"])
-        archivo = request.files.get("pdf")
+        conn = None
+        cur = None
 
-        # 🔒 validar campos
-        if not nombre or not programa:
-            return "Campos obligatorios incompletos"
+        try:
+            nombre = limpiar_texto(request.form.get("nombre"))
+            dni = request.form.get("dni", "").strip()
+            tipo = limpiar_texto(request.form.get("tipo"))
+            programa = limpiar_texto(request.form.get("programa"))
+            promocion = limpiar_texto(request.form.get("promocion"))
+            sede = limpiar_texto(request.form.get("sede"))
+            modalidad = limpiar_texto(request.form.get("modalidad"))
+            duracion = limpiar_texto(request.form.get("duracion"))
+            fecha_inicio = request.form.get("fecha_inicio", "").strip() or None
+            fecha_fin = request.form.get("fecha_fin", "").strip() or None
+            horas = limpiar_texto(request.form.get("horas"))
+            archivo = request.files.get("pdf")
 
-        # VALIDAR DNI
-        if not dni.isdigit() or len(dni) not in [8, 9]:
-            return "DNI inválido (debe tener 8 o 9 digitos)"
-        
-        # GENERAR QR
-        url = f"http://127.0.0.1:5000/verificar/{dni}"
-        img = qrcode.make(url)
-        ruta_qr = f"qr/{dni}.png"
-        qr_filename = f"{dni}.png"
-        img.save(ruta_qr)
+            if not nombre or not programa or not tipo or not promocion or not sede:
+                return jsonify({"error": "Campos obligatorios incompletos"}), 400
 
-        # GUARDAR PDF
-        ruta = ""
-        if archivo and archivo.filename != "":
+            if not dni.isdigit() or len(dni) not in [8, 9]:
+                return jsonify({"error": "DNI inválido (debe tener 8 o 9 dígitos)"}), 400
 
-            # 🔒 validar extensión
-            if not archivo.filename.lower().endswith(".pdf"):
-                return "Solo se permiten archivos PDF"
-            
-            from werkzeug.utils import secure_filename
-            import uuid
+            qr_filename = dni
 
-            filename = f"{uuid.uuid4().hex}.pdf"
-            ruta = os.path.join("certificados", filename)
-            archivo.save(ruta)
+            ruta_pdf_bd = ""
 
-        # =========================
-        # 🔥 POSTGRESQL
-        # =========================
-        conn = get_connection()
-        cur = conn.cursor()
+            if archivo and archivo.filename:
+                if not archivo.filename.lower().endswith(".pdf"):
+                    return jsonify({"error": "Solo se permiten archivos PDF"}), 400
 
-        # Verificar duplicado
-        cur.execute("""
-            SELECT * FROM programas
-            WHERE dni=%s AND tipo=%s AND nombre=%s AND promocion=%s AND sede=%s
-        """, (dni, tipo, programa, promocion, sede))
+                filename = f"{uuid.uuid4().hex}.pdf"
+                ruta_pdf_fisica = os.path.join(BASE_DIR, "certificados", filename)
+                archivo.save(ruta_pdf_fisica)
+                ruta_pdf_bd = f"certificados/{filename}"
 
-        duplicado = cur.fetchone()
+            conn = get_connection()
+            cur = conn.cursor()
 
-        if duplicado:
-            cur.close()
-            conn.close()
-            return redirect(f"/verificar/{dni}?error=duplicado")
+            cur.execute("""
+                SELECT 1
+                FROM programas
+                WHERE dni = %s
+                  AND tipo = %s
+                  AND nombre = %s
+                  AND promocion = %s
+                  AND sede = %s
+            """, (dni, tipo, programa, promocion, sede))
 
-        # Insertar alumno si no existe
-        cur.execute("""
-            INSERT INTO alumnos (dni, nombre)
-            VALUES (%s, %s)
-            ON CONFLICT (dni) DO NOTHING
-        """, (dni, nombre))
+            duplicado = cur.fetchone()
 
-        # Insertar programa
-        cur.execute("""
-            INSERT INTO programas (
-                dni, tipo, nombre, promocion, sede,
+            if duplicado:
+                return jsonify({"error": "Ese alumno ya está registrado en ese programa"}), 400
+
+            cur.execute("""
+                INSERT INTO alumnos (dni, nombre)
+                VALUES (%s, %s)
+                ON CONFLICT (dni) DO UPDATE
+                SET nombre = EXCLUDED.nombre
+            """, (dni, nombre))
+
+            cur.execute("""
+                INSERT INTO programas (
+                    dni, tipo, nombre, promocion, sede,
+                    modalidad, duracion, fecha_inicio,
+                    fecha_fin, horas, pdf, qr
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                dni, tipo, programa, promocion, sede,
                 modalidad, duracion, fecha_inicio,
-                fecha_fin, horas, pdf, qr
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            dni, tipo, programa, promocion, sede,
-            modalidad, duracion, fecha_inicio,
-            fecha_fin, horas, ruta, qr_filename
-        ))
+                fecha_fin, horas, ruta_pdf_bd, qr_filename
+            ))
 
-        conn.commit()
-        cur.close()
-        conn.close()
+            conn.commit()
+            return jsonify({"mensaje": "Alumno registrado correctamente"})
 
-        return jsonify({"mensaje": "Alumno registrado correctamente"})
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            return jsonify({"error": str(e)}), 500
+
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
     eventos_db = ejecutar_query(
         "SELECT nombre FROM eventos ORDER BY nombre",
@@ -352,7 +351,6 @@ def registrar():
     )
 
     eventos = [{"nombre": e[0]} for e in eventos_db]
-
     return render_template("registrar.html", eventos=eventos)
 
 # ================================
@@ -421,38 +419,24 @@ def verificar(dni):
 @app.route('/certificados/<path:filename>')
 @login_required
 def descargar_pdf(filename):
-
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT 1 FROM programas WHERE pdf = %s", (f"certificados/{filename}",))
-    existe = cur.fetchone()
+    try:
+        cur.execute(
+            "SELECT 1 FROM programas WHERE pdf = %s",
+            (f"certificados/{filename}",)
+        )
+        existe = cur.fetchone()
 
-    cur.close()
-    conn.close()
+        if not existe:
+            return "Archivo no autorizado"
 
-    if not existe:
-        return "Archivo no autorizado"
+        return send_from_directory(os.path.join(BASE_DIR, 'certificados'), filename)
 
-    return send_from_directory('certificados', filename)
-
-@app.route('/qr/<path:filename>')
-@login_required
-def ver_qr(filename):
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT 1 FROM programas WHERE qr = %s", (filename,))
-    existe = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    if not existe:
-        return "QR no autorizado"
-
-    return send_from_directory('qr', filename)
+    finally:
+        cur.close()
+        conn.close()
 
 @app.route('/eliminar_programa/<dni>/<nombre>/<promocion>/<sede>')
 @login_required
@@ -1015,14 +999,7 @@ def carga_masiva():
                     dni = str(int(row["DNI"]))
                     nombre = limpiar_texto(row["NOMBRE"])
 
-                    # ======================
-                    # GENERAR QR
-                    # ======================
-                    url = f"http://127.0.0.1:5000/verificar/{dni}"
-                    img = qrcode.make(url)
-                    ruta_qr = f"qr/{dni}.png"
-                    qr_filename = f"{dni}.png"
-                    img.save(ruta_qr)
+                    qr_filename = dni
 
                     # ======================
                     # TIPO EVENTO
@@ -1162,7 +1139,7 @@ def generar_certificados():
         archivo = request.files.get("modelo")
 
         if archivo and archivo.filename != "":
-            archivo.save("certificado_base.jpg")
+            archivo.save(os.path.join(BASE_DIR, "certificado_base.jpg"))
 
         generar_certificados_grupo(evento, promocion, sede)
 
@@ -1185,14 +1162,13 @@ def generar_certificados():
 @app.route("/subir_modelo", methods=["POST"])
 @login_required
 def subir_modelo():
-
     if not session.get("admin"):
         return "Acceso restringido"
+
     archivo = request.files["modelo"]
 
     if archivo:
-        # 🔥 reemplaza directamente el modelo actual
-        archivo.save("certificado_base.jpg")
+        archivo.save(os.path.join(BASE_DIR, "certificado_base.jpg"))
 
     return redirect("/generar_certificados")
 
@@ -1398,9 +1374,9 @@ def certificados_doble():
 
             # FUENTE
             try:
-                font_tabla = ImageFont.truetype("arial.ttf", 22)
+                font_tabla = ImageFont.truetype(ruta_fuente, 22)
             except:
-                font_tabla = ImageFont.load_default()
+                font_tabla = ImageFont.truetype(ruta_fuente, 22)
 
             # ===== ENCABEZADO =====
             headers = ["MÓDULO", "NOTA", "HORAS"]
@@ -1479,17 +1455,17 @@ def certificados_doble():
 
             # 🔤 Fuente más grande (simula negrita)
             try:
-                font_estilo = ImageFont.truetype("arialbd.ttf", 28)
+                font_estilo = ImageFont.truetype(ruta_fuente, 28)
             except:
                 font_estilo = font_tabla
 
             try:
-                font_normal = ImageFont.truetype("arial.ttf", 26)
+                font_normal = ImageFont.truetype(ruta_fuente, 24)
             except:
                 font_normal = font_tabla
 
             try:
-                font_estilo_small = ImageFont.truetype("arialbd.ttf", 22)
+                font_estilo_small = ImageFont.truetype(ruta_fuente, 20)
             except:
                 font_estilo_small = font_estilo
 
@@ -1540,9 +1516,9 @@ def certificados_doble():
 
             # FUENTE
             try:
-                font = ImageFont.truetype("arial.ttf", 40)
+                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
             except:
-                font = ImageFont.load_default()
+                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
 
             # TEXTO
             nombre = a["nombre"]
@@ -1555,7 +1531,7 @@ def certificados_doble():
             tamano_min = 40
 
             tamano_fuente = tamano_max
-            font = ImageFont.truetype("arial.ttf", tamano_fuente)
+            font = ImageFont.truetype(ruta_fuente, tamano_fuente)
 
             # AJUSTE CONTROLADO
             while True:
@@ -1569,10 +1545,10 @@ def certificados_doble():
 
                 if tamano_fuente <= tamano_min:
                     tamano_fuente = tamano_min
-                    font = ImageFont.truetype("arial.ttf", tamano_fuente)
+                    font = ImageFont.truetype(ruta_fuente, tamano_fuente)
                     break
 
-                font = ImageFont.truetype("arial.ttf", tamano_fuente)
+                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
 
             # CENTRAR
             x = (ancho_img - ancho_texto) / 2
@@ -1706,9 +1682,27 @@ def subir_pdf(dni, index):
 
     return redirect(f"/verificar/{dni}")
 
+@app.route("/qr_dinamico/<dni>")
+def qr_dinamico(dni):
+    if not dni.isdigit() or len(dni) not in [8, 9]:
+        return "DNI inválido", 400
+
+    if PUBLIC_BASE_URL:
+        url = f"{PUBLIC_BASE_URL}/verificar/{dni}"
+    else:
+        url = request.host_url.rstrip("/") + f"/verificar/{dni}"
+
+    img = qrcode.make(url)
+
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype="image/png")
+
 # ================================
 # EJECUTAR
 # ================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False)

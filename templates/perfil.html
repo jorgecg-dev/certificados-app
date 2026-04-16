@@ -238,14 +238,12 @@ input[type="file"] {
 
 <div style="text-align:center;">
 
-{% if alumno["programas"] and alumno["programas"][0]["qr"] %}
+<div style="text-align:center;">
+    <img src="/qr_dinamico/{{ alumno['dni'] }}" class="qr-img">
 
-    <img src="/qr/{{ alumno['programas'][0]['qr'] }}" class="qr-img">
-
-    <a href="/qr/{{ alumno['programas'][0]['qr'] }}" download class="btn" style="font-size:12px;">
+    <a href="/qr_dinamico/{{ alumno['dni'] }}" download class="btn" style="font-size:12px;">
         Descargar QR
     </a>
-{% endif %}
 </div>
 
 </div>
