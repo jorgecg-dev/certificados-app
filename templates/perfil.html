@@ -25,11 +25,13 @@ body {
 .card {
     background: white;
     width: 90%;
-    max-width: 700px;
+    max-width: 520px;
     margin: 40px auto;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+    display: block;
+    overflow: hidden;
 }
 
 h2 {
@@ -59,11 +61,12 @@ h3 {
 .programa {
     background: #f8f9ff;
     margin-top: 15px;
-    padding: 18px;
+    padding: 15px;
     border-radius: 10px;
     text-align: left;
     border-left: 5px solid #007bff;
-    box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .btn {
@@ -329,7 +332,7 @@ input[type="file"] {
             </a>
         </div>
     </div>
-    
+
     </div>
 
 {% set categorias = {
