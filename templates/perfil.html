@@ -165,7 +165,6 @@ input[type="file"] {
     justify-content: space-between;
     align-items: center;
     gap: 20px;
-    flex-wrap: wrap;
     margin-bottom: 20px;
 }
 
@@ -233,6 +232,37 @@ input[type="file"] {
     width: 80px;
     }
 
+    .info-alumno {
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+    }
+
+    .info-alumno h2 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.2;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .info-alumno .dni {
+        margin-top: 8px;
+    }
+
+    .qr-box {
+        width: 130px;
+        flex-shrink: 0;
+        text-align: center;
+    }
+
+    .qr-img {
+        width: 95px;
+        height: auto;
+        display: block;
+        margin: 0 auto 8px auto;
+    }
+
 }
 
 </style>
@@ -243,12 +273,12 @@ input[type="file"] {
 <div class="card">
 
     <div class="header-perfil">
-        <div>
+        <div class="info-alumno">
             <h2>{{ alumno["nombre"] }}</h2>
             <p class="dni"><strong>DNI:</strong> {{ alumno["dni"] }}</p>
         </div>
 
-        <div style="text-align:center;">
+        <div class="qr-box">
             <img src="/qr_dinamico/{{ alumno['dni'] }}" class="qr-img">
 
             <a href="/qr_dinamico/{{ alumno['dni'] }}" download class="btn" style="font-size:12px;">
