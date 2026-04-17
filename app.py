@@ -1242,8 +1242,10 @@ def certificados_doble():
                     ruta = os.path.join("fotos", foto.filename)
                     foto.save(ruta)
 
-        # CREAR CARPETA SI NO EXISTE
+        # CREAR CARPETAS SI NO EXISTEN
         os.makedirs("temp", exist_ok=True)
+        os.makedirs("salida", exist_ok=True)
+        os.makedirs("fotos", exist_ok=True)
 
         # GUARDAR ARCHIVOS
         ruta_frontal = os.path.join("temp", frontal.filename)
@@ -1290,8 +1292,6 @@ def certificados_doble():
 
             alumnos.append(alumno)
 
-        os.makedirs("salida", exist_ok=True)
-
         for a in alumnos:
 
             # ABRIR IMAGEN BASE
@@ -1304,7 +1304,10 @@ def certificados_doble():
 
             # ===== GENERAR QR AUTOMÁTICO =====
             try:
-                url = f"http://127.0.0.1:5000/verificar/{a['dni']}"
+                if PUBLIC_BASE_URL:
+                    url = f"{PUBLIC_BASE_URL}/verificar/{a['dni']}"
+                else:
+                    url = f"http://127.0.0.1:5000/verificar/{a['dni']}"
 
                 qr = qrcode.make(url)
                 qr = qr.convert("RGB")
@@ -1312,7 +1315,7 @@ def certificados_doble():
                 # tamaño
                 qr = qr.resize((100, 100))
 
-                # posición (AJUSTAR)
+                # posición (SE MANTIENE)
                 qr_x = 610
                 qr_y = 570
 
@@ -1321,79 +1324,69 @@ def certificados_doble():
             except:
                 pass
 
-            # ===== TABLA DE MÓDULOS PROFESIONAL =====
-
+            # ===== TABLA DE MÓDULOS =====
             modulos = a["modulos"]
 
             # ===== CALCULAR PROMEDIO Y HORAS =====
-
             notas = []
             horas_lista = []
 
             for m in modulos:
-                if m["nota"] is not None:
+                if m["nota"] is not None and pd.notna(m["nota"]):
                     notas.append(float(m["nota"]))
-                if m["horas"] is not None:
+                if m["horas"] is not None and pd.notna(m["horas"]):
                     horas_lista.append(float(m["horas"]))
 
-            # PROMEDIO
-            if len(notas) > 0:
-                promedio = round(sum(notas) / len(notas))
-            else:
-                promedio = 0
-
-            # TOTAL HORAS
-            total_horas = int(sum(horas_lista))
-
+            promedio = round(sum(notas) / len(notas)) if len(notas) > 0 else 0
+            total_horas = int(sum(horas_lista)) if len(horas_lista) > 0 else 0
             promedio_texto = numero_a_letras(promedio)
 
             # TAMAÑO DE IMAGEN
-            ancho_img, alto_img = img_back.size
+            ancho_img_back, alto_img_back = img_back.size
 
-            # ESPACIOS (AJUSTABLE)
+            # ESPACIOS
             margin_x = 40
             margin_top = 80
-            margin_bottom = 180  # hasta antes de "PROMEDIO"
+            margin_bottom = 180
 
             # ÁREA DISPONIBLE
-            area_ancho = ancho_img - (margin_x * 2)
-            area_alto = alto_img - margin_top - margin_bottom
+            area_ancho = ancho_img_back - (margin_x * 2)
+            area_alto = alto_img_back - margin_top - margin_bottom
 
-            # COLUMNAS (PORCENTAJES)
-            col_modulo = int(area_ancho * 0.6)
-            col_nota = int(area_ancho * 0.2)
-            col_horas = int(area_ancho * 0.2)
+            # COLUMNAS
+            col_modulo_w = int(area_ancho * 0.6)
+            col_nota_w = int(area_ancho * 0.2)
+            col_horas_w = int(area_ancho * 0.2)
 
             # ALTURA DINÁMICA
-            total_filas = len(modulos) + 1  # + encabezado
-            alto_fila = int(area_alto / total_filas)
+            total_filas = len(modulos) + 1
+            alto_fila = int(area_alto / total_filas) if total_filas > 0 else 40
 
             # POSICIÓN INICIAL
             x_inicio = margin_x
             y_inicio = margin_top
 
-            # FUENTE
+            # FUENTE TABLA
             try:
                 font_tabla = ImageFont.truetype(ruta_fuente, 22)
             except:
-                font_tabla = ImageFont.truetype(ruta_fuente, 22)
+                font_tabla = ImageFont.load_default()
 
             # ===== ENCABEZADO =====
             headers = ["MÓDULO", "NOTA", "HORAS"]
 
             for i, text in enumerate(headers):
                 if i == 0:
-                    ancho_col = col_modulo
+                    ancho_col = col_modulo_w
                     x = x_inicio
                 elif i == 1:
-                    ancho_col = col_nota
-                    x = x_inicio + col_modulo
+                    ancho_col = col_nota_w
+                    x = x_inicio + col_modulo_w
                 else:
-                    ancho_col = col_horas
-                    x = x_inicio + col_modulo + col_nota
+                    ancho_col = col_horas_w
+                    x = x_inicio + col_modulo_w + col_nota_w
 
-                # TEXTO CENTRADO
-                bbox = draw_back.textbbox((0,0), text, font=font_tabla)
+                bbox = draw_back.textbbox((0, 0), text, font=font_tabla)
                 text_w = bbox[2] - bbox[0]
                 text_h = bbox[3] - bbox[1]
 
@@ -1402,7 +1395,6 @@ def certificados_doble():
 
                 draw_back.text((tx, ty), text, fill="black", font=font_tabla)
 
-                # BORDE
                 draw_back.rectangle(
                     [x, y_inicio, x + ancho_col, y_inicio + alto_fila],
                     outline="black",
@@ -1413,7 +1405,6 @@ def certificados_doble():
             y = y_inicio + alto_fila
 
             for m in modulos:
-
                 datos = [
                     str(m["nombre"]),
                     str(m["nota"]),
@@ -1421,19 +1412,17 @@ def certificados_doble():
                 ]
 
                 for i, text in enumerate(datos):
-
                     if i == 0:
-                        ancho_col = col_modulo
+                        ancho_col = col_modulo_w
                         x = x_inicio
                     elif i == 1:
-                        ancho_col = col_nota
-                        x = x_inicio + col_modulo
+                        ancho_col = col_nota_w
+                        x = x_inicio + col_modulo_w
                     else:
-                        ancho_col = col_horas
-                        x = x_inicio + col_modulo + col_nota
+                        ancho_col = col_horas_w
+                        x = x_inicio + col_modulo_w + col_nota_w
 
-                    # TEXTO CENTRADO
-                    bbox = draw_back.textbbox((0,0), text, font=font_tabla)
+                    bbox = draw_back.textbbox((0, 0), text, font=font_tabla)
                     text_w = bbox[2] - bbox[0]
                     text_h = bbox[3] - bbox[1]
 
@@ -1442,7 +1431,6 @@ def certificados_doble():
 
                     draw_back.text((tx, ty), text, fill="black", font=font_tabla)
 
-                    # BORDE
                     draw_back.rectangle(
                         [x, y, x + ancho_col, y + alto_fila],
                         outline="black",
@@ -1451,9 +1439,7 @@ def certificados_doble():
 
                 y += alto_fila
 
-            # ===== TEXTO FINAL FORMATO CERTIFICADO =====
-
-            # 🔤 Fuente más grande (simula negrita)
+            # ===== TEXTO FINAL =====
             try:
                 font_estilo = ImageFont.truetype(ruta_fuente, 28)
             except:
@@ -1469,20 +1455,16 @@ def certificados_doble():
             except:
                 font_estilo_small = font_estilo
 
-            # ===== TEXTO FINAL BIEN ALINEADO =====
-
             x_label = x_inicio
             x_dospuntos = x_label + 200
             x_valor = x_dospuntos + 20
 
             y_label = y + 40
 
-            # 🔹 PROMEDIO
             draw_back.text((x_label, y_label), "PROMEDIO FINAL", fill="black", font=font_estilo_small)
             draw_back.text((x_dospuntos, y_label), ":", fill="black", font=font_estilo_small)
             draw_back.text((x_valor, y_label), f"{promedio} ({promedio_texto})", fill="black", font=font_estilo_small)
 
-            # 🔹 HORAS
             draw_back.text((x_label, y_label + 40), "TOTAL HORAS", fill="black", font=font_estilo_small)
             draw_back.text((x_dospuntos, y_label + 40), ":", fill="black", font=font_estilo_small)
             draw_back.text((x_valor, y_label + 40), f"{total_horas} HORAS ACADÉMICAS", fill="black", font=font_estilo_small)
@@ -1495,7 +1477,7 @@ def certificados_doble():
                 ancho_foto = 120
                 alto_foto = 150
 
-                # POSICIÓN (usa la que ya tenías)
+                # POSICIÓN (SE MANTIENE)
                 pos_x = 40
                 pos_y = 550
 
@@ -1503,25 +1485,17 @@ def certificados_doble():
                     foto = Image.open(ruta_foto).convert("RGB")
                     foto = foto.resize((ancho_foto, alto_foto))
                     img.paste(foto, (pos_x, pos_y))
-
                 else:
                     draw.rectangle(
                         [pos_x, pos_y, pos_x + ancho_foto, pos_y + alto_foto],
                         outline=(0, 0, 0),
                         width=2
                     )
-
             except:
                 pass
 
-            # FUENTE
-            try:
-                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
-            except:
-                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
-
-            # TEXTO
-            nombre = a["nombre"]
+            # ===== TEXTO NOMBRE FRONTAL =====
+            nombre = str(a["nombre"])
 
             # TAMAÑO DE LA IMAGEN
             ancho_img, alto_img = img.size
@@ -1529,9 +1503,13 @@ def certificados_doble():
             # TAMAÑO INICIAL
             tamano_max = 65
             tamano_min = 40
-
             tamano_fuente = tamano_max
-            font = ImageFont.truetype(ruta_fuente, tamano_fuente)
+
+            # FUENTE
+            try:
+                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
+            except:
+                font = ImageFont.load_default()
 
             # AJUSTE CONTROLADO
             while True:
@@ -1545,33 +1523,39 @@ def certificados_doble():
 
                 if tamano_fuente <= tamano_min:
                     tamano_fuente = tamano_min
-                    font = ImageFont.truetype(ruta_fuente, tamano_fuente)
+                    try:
+                        font = ImageFont.truetype(ruta_fuente, tamano_fuente)
+                    except:
+                        font = ImageFont.load_default()
+                    bbox = draw.textbbox((0, 0), nombre, font=font)
+                    ancho_texto = bbox[2] - bbox[0]
                     break
 
-                font = ImageFont.truetype(ruta_fuente, tamano_fuente)
+                try:
+                    font = ImageFont.truetype(ruta_fuente, tamano_fuente)
+                except:
+                    font = ImageFont.load_default()
 
             # CENTRAR
             x = (ancho_img - ancho_texto) / 2
 
-            # POSICIÓN VERTICAL (AJUSTAR)
-            y = 265  # ← prueba este valor
+            # POSICIÓN VERTICAL (SE MANTIENE)
+            y = 265
 
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
-                    draw.text((x+dx, y+dy), nombre, fill=(20,20,20), font=font)
+                    draw.text((x + dx, y + dy), nombre, fill=(20, 20, 20), font=font)
 
-            # GUARDAR
+            # GUARDAR JPGS
             ruta_salida = f"salida/{a['dni']}_frontal.jpg"
             img.save(ruta_salida)
 
             ruta_salida_back = f"salida/{a['dni']}_trasero.jpg"
             img_back.save(ruta_salida_back)
 
-        # OBTENER TAMAÑO REAL DEL CERTIFICADO frontal
+        # PDF FRONTALES
         img_temp = Image.open(ruta_frontal)
         ancho, alto = img_temp.size
-
-        # ===== GENERAR PDF FRONTAL =====
         pdf_frontal = canvas.Canvas("salida/frontales.pdf", pagesize=(ancho, alto))
 
         for a in alumnos:
@@ -1581,11 +1565,9 @@ def certificados_doble():
 
         pdf_frontal.save()
 
-        # OBTENER TAMAÑO REAL DEL CERTIFICADO trasero
+        # PDF TRASEROS
         img_temp = Image.open(ruta_trasero)
-        ancho, alto = img_temp.size        
-
-        # ===== GENERAR PDF TRASERO =====
+        ancho, alto = img_temp.size
         pdf_trasero = canvas.Canvas("salida/traseros.pdf", pagesize=(ancho, alto))
 
         for a in alumnos:
@@ -1595,6 +1577,7 @@ def certificados_doble():
 
         pdf_trasero.save()
 
+        # LIMPIAR JPGS TEMPORALES
         for a in alumnos:
             ruta_f = f"salida/{a['dni']}_frontal.jpg"
             ruta_b = f"salida/{a['dni']}_trasero.jpg"
