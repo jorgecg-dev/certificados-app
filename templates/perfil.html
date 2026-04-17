@@ -163,7 +163,7 @@ input[type="file"] {
 .header-perfil {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 20px;
     margin-bottom: 20px;
 }
@@ -263,6 +263,49 @@ input[type="file"] {
         margin: 0 auto 8px auto;
     }
 
+    .info-alumno {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+    }
+
+    .info-alumno h2 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.2;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .info-alumno .dni {
+        margin-top: 8px;
+    }
+
+    .qr-box {
+        width: 130px;
+        min-width: 130px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+    }
+
+    .qr-img {
+        width: 95px;
+        height: auto;
+        display: block;
+        margin: 0 auto 8px auto;
+    }
+
+    .qr-btn {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
 }
 
 </style>
@@ -281,10 +324,12 @@ input[type="file"] {
         <div class="qr-box">
             <img src="/qr_dinamico/{{ alumno['dni'] }}" class="qr-img">
 
-            <a href="/qr_dinamico/{{ alumno['dni'] }}" download class="btn" style="font-size:12px;">
+            <a href="/qr_dinamico/{{ alumno['dni'] }}" download class="btn qr-btn">
                 Descargar QR
             </a>
         </div>
+    </div>
+    
     </div>
 
 {% set categorias = {
