@@ -3,21 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <title>Perfil del Alumno</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial;
     margin: 0;
     text-align: center;
-
+    overflow-x: hidden;
     background: linear-gradient(
         rgba(255,255,255,0.9),
         rgba(255,255,255,0.9)
     ),
     url("/static/fondo.png");
-
     background-size: cover;
     background-position: center;
 }
@@ -41,20 +43,15 @@ h2 {
 h3 {
     margin-top: 30px;
     margin-bottom: 15px;
-
     background: #e9f2ff;
     color: #1e3c72;
-
     padding: 12px 15px;
     border-radius: 10px;
-
     font-weight: 900;
     font-size: 20px;
     letter-spacing: 1px;
-
     text-align: center;
     position: relative;
-
     box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
 }
 
@@ -145,6 +142,7 @@ input[type="file"] {
     margin-top: 20px;
     display: flex;
     justify-content: space-between;
+    gap: 10px;
 }
 
 .acciones-finales {
@@ -171,13 +169,50 @@ input[type="file"] {
     margin-bottom: 20px;
 }
 
+.info-alumno {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+}
+
+.info-alumno h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.2;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.info-alumno .dni {
+    margin-top: 8px;
+}
+
+.qr-box {
+    width: 130px;
+    min-width: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+}
+
 .qr-img {
-    width: 110px;
-    max-width: 100%;
+    width: 95px;
+    height: auto;
+    display: block;
+    margin: 0 auto 8px auto;
+}
+
+.qr-btn {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 @media (max-width: 600px) {
-
     .card {
         width: 95%;
         max-width: 100%;
@@ -194,9 +229,8 @@ input[type="file"] {
     }
 
     .header-perfil {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
+        gap: 12px;
+        align-items: flex-start;
     }
 
     .programa {
@@ -231,86 +265,24 @@ input[type="file"] {
         font-size: 14px;
     }
 
-    .qr-img {
-    width: 80px;
-    }
-
-    .info-alumno {
-        flex: 1;
-        min-width: 0;
-        text-align: left;
-    }
-
-    .info-alumno h2 {
-        margin: 0;
-        font-size: 18px;
-        line-height: 1.2;
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
-
-    .info-alumno .dni {
-        margin-top: 8px;
-    }
-
     .qr-box {
-        width: 130px;
-        flex-shrink: 0;
-        text-align: center;
+        width: 110px;
+        min-width: 110px;
     }
 
     .qr-img {
-        width: 95px;
-        height: auto;
-        display: block;
-        margin: 0 auto 8px auto;
-    }
-
-    .info-alumno {
-        flex: 1;
-        min-width: 0;
-        text-align: center;
-    }
-
-    .info-alumno h2 {
-        margin: 0;
-        font-size: 18px;
-        line-height: 1.2;
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
-
-    .info-alumno .dni {
-        margin-top: 8px;
-    }
-
-    .qr-box {
-        width: 130px;
-        min-width: 130px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        text-align: center;
-    }
-
-    .qr-img {
-        width: 95px;
-        height: auto;
-        display: block;
-        margin: 0 auto 8px auto;
+        width: 80px;
     }
 
     .qr-btn {
-        display: inline-block;
-        margin-top: 6px;
-        padding: 8px 12px;
-        font-size: 12px;
-        white-space: nowrap;
+        font-size: 11px;
+        padding: 7px 10px;
     }
 
+    .info-alumno h2 {
+        font-size: 16px;
+    }
 }
-
 </style>
 </head>
 
@@ -333,120 +305,111 @@ input[type="file"] {
         </div>
     </div>
 
+    {% set categorias = {
+    "diplomado": "DIPLOMADOS",
+    "programa": "PROGRAMAS",
+    "curso": "CURSOS",
+    "convencion": "CONVENCIONES",
+    "taller": "TALLERES"
+    } %}
+
+    {% for tipo, titulo in categorias.items() %}
+
+    {% set lista = [] %}
+
+    {% for prog in alumno["programas"] %}
+    {% if prog["tipo"] | lower | trim == tipo | lower | trim %}
+    {% set _ = lista.append(prog) %}
+    {% endif %}
+    {% endfor %}
+
+    {% if lista %}
+    <h3>{{ titulo }}</h3>
+
+    {% for p in lista %}
+    <div class="programa">
+
+        <p><strong>{{ p.nombre }}</strong></p>
+        <p>Promoción: {{ p.promocion }}</p>
+        <p>Sede: {{ p.sede }}</p>
+        <p>Modalidad: {{ p.modalidad }}</p>
+        <p>Duración: {{ p.duracion }}</p>
+        <p>Inicio: {{ p.fecha_inicio }}</p>
+        <p>Fin: {{ p.fecha_fin }}</p>
+        <p>Horas: {{ p.horas }}</p>
+
+        {% if p.get("pdf") %}
+        <a class="btn" href="/{{ p['pdf'] }}" target="_blank">📄 Descargar PDF</a>
+
+        {% if session.get("admin") %}
+        <form action="/reemplazar_pdf/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="pdf" required>
+            <button type="submit" class="btn">🔄 Reemplazar</button>
+        </form>
+        {% endif %}
+
+        {% else %}
+
+        {% if session.get("admin") %}
+        <form action="/subir_pdf/{{ alumno['dni'] }}/{{ loop.index0 }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="pdf" required>
+            <button type="submit" class="btn">📤 Subir</button>
+        </form>
+        {% endif %}
+
+        {% endif %}
+
+        {% if session.get("admin") %}
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button onclick="abrirModal(
+            '{{ alumno.dni }}',
+            '{{ loop.index0 }}',
+            '{{ p.nombre }}',
+            '{{ p.promocion }}',
+            '{{ p.sede }}',
+            '{{ p.duracion }}',
+            '{{ p.fecha_inicio }}',
+            '{{ p.fecha_fin }}',
+            '{{ p.horas }}'
+            )" class="btn">✏️ Editar</button>
+
+            <a href="/eliminar_programa/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}?next=perfil"
+               class="btn"
+               style="background:#dc3545;"
+               onclick="return confirm('¿Eliminar este registro?')">
+               ❌ Eliminar
+            </a>
+        </div>
+        {% endif %}
+
     </div>
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
 
-{% set categorias = {
-"diplomado": "DIPLOMADOS",
-"programa": "PROGRAMAS",
-"curso": "CURSOS",
-"convencion": "CONVENCIONES",
-"taller": "TALLERES"
-} %}
+    <br>
 
-{% for tipo, titulo in categorias.items() %}
+    <div class="acciones-finales">
+    {% if session.get("admin") %}
+        <a class="btn" href="/buscar">🔍 Buscar otro alumno</a>
+        <a class="btn" href="/dashboard">🏠 Volver al inicio</a>
 
-{% set lista = [] %}
+        <button class="btn btn-editar btn-editar-alumno"
+            data-dni="{{ alumno['dni'] }}"
+            data-nombre="{{ alumno['nombre'] }}">
+            ✏️ Editar alumno
+        </button>
 
-{% for prog in alumno["programas"] %}
-{% if prog["tipo"] | lower | trim == tipo | lower | trim %}
-{% set _ = lista.append(prog) %}
-{% endif %}
-{% endfor %}
-
-{% if lista %}
-<h3>{{ titulo }}</h3>
-
-{% for p in lista %}
-
-<div class="programa">
-
-<p><strong>{{ p.nombre }}</strong></p>
-<p>Promoción: {{ p.promocion }}</p>
-<p>Sede: {{ p.sede }}</p>
-<p>Modalidad: {{ p.modalidad }}</p>
-<p>Duración: {{ p.duracion }}</p>
-<p>Inicio: {{ p.fecha_inicio }}</p>
-<p>Fin: {{ p.fecha_fin }}</p>
-<p>Horas: {{ p.horas }}</p>
-
-{% if p.get("pdf") %}
-<a class="btn" href="/{{ p['pdf'] }}" target="_blank">📄 Descargar PDF</a>
-
-{% if session.get("admin") %}
-<form action="/reemplazar_pdf/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}" method="post" enctype="multipart/form-data">
-<input type="file" name="pdf" required>
-<button type="submit" class="btn">🔄 Reemplazar</button>
-</form>
-{% endif %}
-
-{% else %}
-
-{% if session.get("admin") %}
-<form action="/subir_pdf/{{ alumno['dni'] }}/{{ loop.index0 }}" method="post" enctype="multipart/form-data">
-<input type="file" name="pdf" required>
-<button type="submit" class="btn">📤 Subir</button>
-</form>
-{% endif %}
-
-{% endif %}
-
-{% if session.get("admin") %}
-<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-<button onclick="abrirModal(
-'{{ alumno.dni }}',
-'{{ loop.index0 }}',
-'{{ p.nombre }}',
-'{{ p.promocion }}',
-'{{ p.sede }}',
-'{{ p.duracion }}',
-'{{ p.fecha_inicio }}',
-'{{ p.fecha_fin }}',
-'{{ p.horas }}'
-)" class="btn">✏️ Editar</button>
-
-<a href="/eliminar_programa/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}?next=perfil"
-   class="btn"
-   style="background:#dc3545;"
-   onclick="return confirm('¿Eliminar este registro?')">
-   ❌ Eliminar
-</a>
-
-</div>
-{% endif %}
-
-</div>
-
-{% endfor %}
-{% endif %}
-{% endfor %}
-
-<br>
-
-<div class="acciones-finales">
-
-{% if session.get("admin") %}
-    <a class="btn" href="/buscar">🔍 Buscar otro alumno</a>
-    <a class="btn" href="/dashboard">🏠 Volver al inicio</a>
-{% else %}
-    <a class="btn" href="/">🔍 Buscar otro alumno</a>
-    <a class="btn" href="/">🏠 Volver al inicio</a>
-{% endif %}
-
-{% if session.get("admin") %}
-    <button class="btn btn-editar btn-editar-alumno"
-        data-dni="{{ alumno['dni'] }}"
-        data-nombre="{{ alumno['nombre'] }}">
-        ✏️ Editar alumno
-    </button>
-
-    <a href="/eliminar/{{ alumno['dni'] }}"
-       class="btn btn-eliminar"
-       onclick="return confirm('¿Seguro que deseas eliminar este alumno?')">
-       🗑️ Eliminar alumno
-    </a>
-{% endif %}
-
-</div>
+        <a href="/eliminar/{{ alumno['dni'] }}"
+           class="btn btn-eliminar"
+           onclick="return confirm('¿Seguro que deseas eliminar este alumno?')">
+           🗑️ Eliminar alumno
+        </a>
+    {% else %}
+        <a class="btn" href="/">🔍 Buscar otro alumno</a>
+        <a class="btn" href="/">🏠 Volver al inicio</a>
+    {% endif %}
+    </div>
 
 </div>
 
@@ -485,14 +448,10 @@ input[type="file"] {
         <h3 style="text-align:center;">✏️ Editar Alumno</h3>
 
         <form id="formAlumno">
-
             <input type="hidden" name="dni_original" id="alumno_dni_original">
 
-            <input type="text" name="dni" id="alumno_dni" 
-                class="input-full" placeholder="DNI"><br><br>
-
-            <input type="text" name="nombre" id="alumno_nombre" 
-                   class="input-full" placeholder="Nombre"><br><br>
+            <input type="text" name="dni" id="alumno_dni" class="input-full" placeholder="DNI"><br><br>
+            <input type="text" name="nombre" id="alumno_nombre" class="input-full" placeholder="Nombre"><br><br>
 
             <button type="submit" class="btn-guardar">Guardar cambios</button>
         </form>
@@ -513,7 +472,6 @@ edit_inicio.value=inicio;
 edit_fin.value=fin;
 edit_horas.value=horas;
 
-// 🔥 CLAVE (esto faltaba)
 document.getElementById("edit_nombre_original").value = nombre;
 document.getElementById("edit_promocion_original").value = promocion;
 document.getElementById("edit_sede_original").value = sede;
@@ -548,10 +506,8 @@ if(e.target===m){m.style.display="none";}
 <script>
 function abrirModalAlumno(dni, nombre){
     document.getElementById("modalAlumno").style.display = "block";
-
     document.getElementById("alumno_dni_original").value = dni;
     document.getElementById("alumno_dni").value = dni;
-    document.getElementById("alumno_nombre").value = nombre;
     document.getElementById("alumno_nombre").value = nombre;
 }
 
@@ -583,16 +539,12 @@ document.getElementById("formAlumno").addEventListener("submit", function(e){
 <script>
 document.querySelectorAll(".btn-editar-alumno").forEach(btn => {
     btn.addEventListener("click", function(){
-
         let dni = this.dataset.dni;
         let nombre = this.dataset.nombre;
 
         document.getElementById("modalAlumno").style.display = "flex";
-
         document.getElementById("alumno_dni").value = dni;
         document.getElementById("alumno_nombre").value = nombre;
-
-        // 🔥 CLAVE (esto faltaba)
         document.getElementById("alumno_dni_original").value = dni;
     });
 });
