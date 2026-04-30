@@ -339,7 +339,12 @@ input[type="file"] {
         <p>Horas: {{ p.horas }}</p>
 
         {% if p.get("pdf") %}
-        <a class="btn" href="/{{ p['pdf'] }}" target="_blank">📄 Descargar PDF</a>
+        
+        <a class="btn"
+        onclick="return confirm('⚠️ Solo tienes 3 descargas disponibles para este certificado.');"
+        href="/descargar_certificado_alumno?dni={{ alumno.dni }}&nombre={{ p.nombre }}&promocion={{ p.promocion }}&sede={{ p.sede }}">
+        📄 Descargar PDF
+        </a>
 
         {% if session.get("admin") %}
         <form action="/reemplazar_pdf/{{ alumno['dni'] }}/{{ p.nombre }}/{{ p.promocion }}/{{ p.sede }}" method="post" enctype="multipart/form-data">

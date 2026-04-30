@@ -1785,6 +1785,51 @@ def subir_pdfs_grupo(nombre, promocion, sede):
     <a href="/grupos">⬅️ Volver a grupos</a>
     """
 
+@app.route("/descargar_certificado_alumno")
+def descargar_certificado_alumno():
+
+    dni = request.args.get("dni")
+    nombre = request.args.get("nombre")
+    promocion = request.args.get("promocion")
+    sede = request.args.get("sede")
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT pdf, descargas_pdf
+        FROM programas
+        WHERE dni=%s AND nombre=%s AND promocion=%s AND sede=%s
+    """, (dni, nombre, promocion, sede))
+
+    data = cur.fetchone()
+
+    if not data:
+        return "No encontrado"
+
+    pdf, descargas = data
+
+    if descargas is None:
+        descargas = 0
+
+    # 🔒 límite de 3 descargas
+    if not session.get("admin"):
+        if descargas >= 3:
+            return "<h3>⚠️ Límite alcanzado. Comunícate con coordinación.</h3>"
+
+        cur.execute("""
+            UPDATE programas
+            SET descargas_pdf = descargas_pdf + 1
+            WHERE dni=%s AND nombre=%s AND promocion=%s AND sede=%s
+        """, (dni, nombre, promocion, sede))
+
+        conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return send_file(pdf, as_attachment=True)
+
 # ================================
 # EJECUTAR
 # ================================
