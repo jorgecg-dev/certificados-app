@@ -34,10 +34,34 @@
 
     <h3 class="titulo-grupo">{{ g.nombre }} - {{ g.promocion }} - {{ g.sede }}</h3>
 
-    <a class="btn-guardar"
-       href="/descargar_qr_grupo/{{ g.nombre }}/{{ g.promocion }}/{{ g.sede }}">
-        📥 Descargar QRs
-    </a>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:15px;">
+
+        <a class="btn-guardar"
+           href="/descargar_qr_grupo/{{ g.nombre }}/{{ g.promocion }}/{{ g.sede }}">
+            📥 Descargar QRs
+        </a>
+
+        <form 
+            action="/subir_pdfs_grupo/{{ g.nombre }}/{{ g.promocion }}/{{ g.sede }}" 
+            method="POST" 
+            enctype="multipart/form-data"
+            style="display:inline-block;"
+        >
+            <input 
+                type="file" 
+                name="pdfs" 
+                multiple 
+                webkitdirectory 
+                accept="application/pdf"
+                required
+            >
+
+            <button type="submit" class="btn-guardar">
+                📄 Subir PDF
+            </button>
+        </form>
+
+    </div>
 
     <table class="tabla-pro">
         <tr>

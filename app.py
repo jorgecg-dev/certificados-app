@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 import uuid
 from io import BytesIO
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
@@ -1682,6 +1683,107 @@ def qr_dinamico(dni):
     buffer.seek(0)
 
     return send_file(buffer, mimetype="image/png")
+
+@app.route("/subir_pdfs_grupo/<nombre>/<promocion>/<sede>", methods=["POST"])
+@login_required
+def subir_pdfs_grupo(nombre, promocion, sede):
+
+    archivos = request.files.getlist("pdfs")
+
+    if not archivos:
+        return "No se subieron archivos PDF"
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    actualizados = 0
+    no_encontrados = []
+    no_validos = []
+
+    try:
+        for archivo in archivos:
+
+            if not archivo or archivo.filename == "":
+                continue
+
+            filename_original = secure_filename(archivo.filename)
+
+            if not filename_original.lower().endswith(".pdf"):
+                no_validos.append(filename_original)
+                continue
+
+            # Obtener solo el nombre del archivo sin carpetas
+            nombre_archivo = os.path.basename(filename_original)
+
+            # DNI = nombre del PDF sin extensión
+            dni_pdf = os.path.splitext(nombre_archivo)[0].strip()
+
+            if not dni_pdf.isdigit() or len(dni_pdf) not in [8, 9]:
+                no_validos.append(nombre_archivo)
+                continue
+
+            # Verificar que ese DNI pertenezca a ese grupo
+            cur.execute("""
+                SELECT pdf
+                FROM programas
+                WHERE dni = %s
+                  AND nombre = %s
+                  AND promocion = %s
+                  AND sede = %s
+            """, (dni_pdf, nombre, promocion, sede))
+
+            resultado = cur.fetchone()
+
+            if not resultado:
+                no_encontrados.append(nombre_archivo)
+                continue
+
+            pdf_anterior = resultado[0]
+
+            # Guardar PDF con nombre único
+            nuevo_nombre = f"{dni_pdf}_{uuid.uuid4().hex}.pdf"
+            ruta_fisica = os.path.join(BASE_DIR, "certificados", nuevo_nombre)
+            ruta_bd = f"certificados/{nuevo_nombre}"
+
+            archivo.save(ruta_fisica)
+
+            # Eliminar PDF anterior si existe
+            if pdf_anterior:
+                ruta_anterior = os.path.join(BASE_DIR, pdf_anterior)
+                if os.path.exists(ruta_anterior):
+                    os.remove(ruta_anterior)
+
+            # Actualizar PDF del programa correcto
+            cur.execute("""
+                UPDATE programas
+                SET pdf = %s
+                WHERE dni = %s
+                  AND nombre = %s
+                  AND promocion = %s
+                  AND sede = %s
+            """, (ruta_bd, dni_pdf, nombre, promocion, sede))
+
+            actualizados += 1
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        return f"Error al subir PDFs: {str(e)}"
+
+    finally:
+        cur.close()
+        conn.close()
+
+    return f"""
+    <h3>✅ Subida masiva finalizada</h3>
+    <p><b>PDFs actualizados:</b> {actualizados}</p>
+    <p><b>Archivos no encontrados en este grupo:</b> {len(no_encontrados)}</p>
+    <p><b>Archivos inválidos:</b> {len(no_validos)}</p>
+
+    <br>
+    <a href="/grupos">⬅️ Volver a grupos</a>
+    """
 
 # ================================
 # EJECUTAR
