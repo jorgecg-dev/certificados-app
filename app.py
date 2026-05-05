@@ -1612,57 +1612,73 @@ try:
 except Exception as e: 
     print("Error de conexión:", e)
 
-@app.route("/subir_pdf/<dni>/<int:index>", methods=["POST"])
+@app.route("/subir_pdf_programa", methods=["POST"])
 @login_required
-def subir_pdf(dni, index):
+def subir_pdf_programa():
 
-    if not session.get("admin"):
-        return "No autorizado"
+    dni = request.form.get("dni")
+    nombre = request.form.get("nombre")
+    promocion = request.form.get("promocion")
+    sede = request.form.get("sede")
 
     archivo = request.files.get("pdf")
 
-    if not archivo:
+    if not archivo or archivo.filename == "":
         return "No se envió archivo"
 
-    carpeta = "static/pdfs"
-    os.makedirs(carpeta, exist_ok=True)
+    if not archivo.filename.lower().endswith(".pdf"):
+        return "Solo se permiten archivos PDF"
 
-    nombre_archivo = f"{dni}_{index}.pdf"
-    ruta = os.path.join(carpeta, nombre_archivo)
+    nombre_unico = f"{dni}_{uuid.uuid4().hex}.pdf"
 
-    archivo.save(ruta)
+    ruta_fisica = os.path.join(BASE_DIR, "certificados", nombre_unico)
+    ruta_bd = f"certificados/{nombre_unico}"
+
+    archivo.save(ruta_fisica)
 
     conn = get_connection()
     cur = conn.cursor()
 
-    # 🔥 obtenemos el programa correcto
-    cur.execute("""
-        SELECT nombre, promocion, sede
-        FROM programas
-        WHERE dni = %s
-        ORDER BY nombre
-    """, (dni,))
+    try:
+        cur.execute("""
+            SELECT pdf
+            FROM programas
+            WHERE dni = %s
+              AND nombre = %s
+              AND promocion = %s
+              AND sede = %s
+        """, (dni, nombre, promocion, sede))
 
-    programas = cur.fetchall()
+        resultado = cur.fetchone()
 
-    if index >= len(programas):
-        return "Índice inválido"
+        if not resultado:
+            return "Programa no encontrado"
 
-    prog = programas[index]
+        pdf_anterior = resultado[0]
 
-    # 🔥 actualizamos solo ese programa
-    cur.execute("""
-        UPDATE programas
-        SET pdf = %s
-        WHERE dni = %s
-        AND nombre = %s
-        AND promocion = %s
-        AND sede = %s
-    """, (ruta, dni, prog[0], prog[1], prog[2]))
+        if pdf_anterior:
+            ruta_anterior = os.path.join(BASE_DIR, pdf_anterior)
+            if os.path.exists(ruta_anterior):
+                os.remove(ruta_anterior)
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        cur.execute("""
+            UPDATE programas
+            SET pdf = %s
+            WHERE dni = %s
+              AND nombre = %s
+              AND promocion = %s
+              AND sede = %s
+        """, (ruta_bd, dni, nombre, promocion, sede))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        return f"Error: {str(e)}"
+
+    finally:
+        cur.close()
+        conn.close()
 
     return redirect(f"/verificar/{dni}")
 
