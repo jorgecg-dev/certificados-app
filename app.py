@@ -1706,14 +1706,12 @@ def subir_pdfs_grupo(nombre, promocion, sede):
             if not archivo or archivo.filename == "":
                 continue
 
-            filename_original = secure_filename(archivo.filename)
+            nombre_archivo = os.path.basename(archivo.filename.replace("\\", "/"))
+            nombre_archivo = secure_filename(nombre_archivo)
 
-            if not filename_original.lower().endswith(".pdf"):
-                no_validos.append(filename_original)
+            if not nombre_archivo.lower().endswith(".pdf"):
+                no_validos.append(nombre_archivo)
                 continue
-
-            # Obtener solo el nombre del archivo sin carpetas
-            nombre_archivo = os.path.basename(filename_original)
 
             # DNI = nombre del PDF sin extensión
             dni_pdf = os.path.splitext(nombre_archivo)[0].strip()
