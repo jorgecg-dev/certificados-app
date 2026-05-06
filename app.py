@@ -823,7 +823,8 @@ def reemplazar_pdf(dni, nombre, promocion, sede):
     # 🔥 guardar nuevo PDF en BD
     cur.execute("""
         UPDATE programas
-        SET pdf = %s
+        SET pdf = %s,
+            descargas_pdf = 0
         WHERE dni = %s
         AND nombre = %s
         AND promocion = %s
@@ -1664,11 +1665,12 @@ def subir_pdf_programa():
 
         cur.execute("""
             UPDATE programas
-            SET pdf = %s
+            SET pdf = %s,
+                descargas_pdf = 0
             WHERE dni = %s
-              AND nombre = %s
-              AND promocion = %s
-              AND sede = %s
+            AND nombre = %s
+            AND promocion = %s
+            AND sede = %s
         """, (ruta_bd, dni, nombre, promocion, sede))
 
         conn.commit()
@@ -1771,11 +1773,12 @@ def subir_pdfs_grupo(nombre, promocion, sede):
             # Actualizar PDF del programa correcto
             cur.execute("""
                 UPDATE programas
-                SET pdf = %s
+                SET pdf = %s,
+                    descargas_pdf = 0
                 WHERE dni = %s
-                  AND nombre = %s
-                  AND promocion = %s
-                  AND sede = %s
+                AND nombre = %s
+                AND promocion = %s
+                AND sede = %s
             """, (ruta_bd, dni_pdf, nombre, promocion, sede))
 
             actualizados += 1
