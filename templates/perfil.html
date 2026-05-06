@@ -341,7 +341,7 @@ input[type="file"] {
         {% if p.get("pdf") %}
         
         <a class="btn"
-        onclick="return confirm('⚠️ Solo tienes 3 descargas disponibles para este certificado.');"
+        onclick="return confirm('⚠️ Te quedan {{ 3 - (p.descargas_pdf or 0) }} descargas disponibles para este certificado.')"
         href="/descargar_certificado_alumno?dni={{ alumno.dni }}&nombre={{ p.nombre }}&promocion={{ p.promocion }}&sede={{ p.sede }}">
         📄 Descargar PDF
         </a>

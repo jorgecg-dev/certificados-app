@@ -381,7 +381,7 @@ def verificar(dni):
     # Obtener programas
     cur.execute("""
         SELECT tipo, nombre, promocion, sede, modalidad,
-               duracion, fecha_inicio, fecha_fin, horas, pdf, qr
+               duracion, fecha_inicio, fecha_fin, horas, pdf, qr, descargas_pdf
         FROM programas
         WHERE dni = %s
         ORDER BY fecha_inicio DESC
@@ -403,7 +403,8 @@ def verificar(dni):
             "fecha_fin": p[7],
             "horas": p[8],
             "pdf": p[9] or "",
-            "qr": p[10] or ""
+            "qr": p[10] or "",
+            "descargas_pdf": p[11] or 0
         })
 
     cur.close()
@@ -1819,6 +1820,8 @@ def descargar_certificado_alumno():
     data = cur.fetchone()
 
     if not data:
+        cur.close()
+        conn.close()
         return "No encontrado"
 
     pdf, descargas = data
@@ -1826,16 +1829,21 @@ def descargar_certificado_alumno():
     if descargas is None:
         descargas = 0
 
-    # 🔒 límite de 3 descargas
     if not session.get("admin"):
+
         if descargas >= 3:
+            cur.close()
+            conn.close()
             return "<h3>⚠️ Límite alcanzado. Comunícate con coordinación.</h3>"
+
+        nuevas_descargas = descargas + 1
+        intentos_restantes = 3 - nuevas_descargas
 
         cur.execute("""
             UPDATE programas
-            SET descargas_pdf = descargas_pdf + 1
+            SET descargas_pdf = %s
             WHERE dni=%s AND nombre=%s AND promocion=%s AND sede=%s
-        """, (dni, nombre, promocion, sede))
+        """, (nuevas_descargas, dni, nombre, promocion, sede))
 
         conn.commit()
 
