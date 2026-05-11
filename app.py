@@ -1327,8 +1327,173 @@ def certificados_doble():
             except:
                 pass
 
-            # ===== TABLA DE MÓDULOS =====
+           # ===== TABLA DE MÓDULOS =====
             modulos = a["modulos"]
+
+            # TAMAÑO DE IMAGEN
+            ancho_img_back, alto_img_back = img_back.size
+
+            # ÁREA DE TABLA
+            margin_x = 35
+            margin_top = 75
+            margin_bottom = 190
+
+            area_ancho = ancho_img_back - (margin_x * 2)
+            area_alto = alto_img_back - margin_top - margin_bottom
+
+            # COLUMNAS
+            col_modulo_w = int(area_ancho * 0.62)
+            col_nota_w = int(area_ancho * 0.19)
+            col_horas_w = area_ancho - col_modulo_w - col_nota_w
+
+            total_filas = len(modulos) + 1
+            alto_fila = max(18, int(area_alto / total_filas))
+
+            x_inicio = margin_x
+            y_inicio = margin_top
+
+            # Tamaño dinámico según cantidad de módulos
+            if len(modulos) <= 10:
+                font_size_tabla = 22
+            elif len(modulos) <= 15:
+                font_size_tabla = 18
+            elif len(modulos) <= 20:
+                font_size_tabla = 15
+            else:
+                font_size_tabla = 12
+
+            font_tabla = ImageFont.truetype(ruta_fuente, font_size_tabla)
+            font_header = ImageFont.truetype(ruta_fuente, font_size_tabla + 2)
+
+
+            def dividir_texto_en_lineas(draw, texto, font, max_width):
+                palabras = str(texto).split()
+                lineas = []
+                linea_actual = ""
+
+                for palabra in palabras:
+                    prueba = linea_actual + " " + palabra if linea_actual else palabra
+                    bbox = draw.textbbox((0, 0), prueba, font=font)
+                    ancho = bbox[2] - bbox[0]
+
+                    if ancho <= max_width:
+                        linea_actual = prueba
+                    else:
+                        if linea_actual:
+                            lineas.append(linea_actual)
+                        linea_actual = palabra
+
+                if linea_actual:
+                    lineas.append(linea_actual)
+
+                return lineas
+
+
+            def dibujar_texto_celda(draw, texto, x, y, w, h, font, align="center"):
+                padding = 6
+                max_width = w - padding * 2
+
+                lineas = dividir_texto_en_lineas(draw, texto, font, max_width)
+
+                # Limitar líneas según alto disponible
+                bbox = draw.textbbox((0, 0), "Ay", font=font)
+                line_height = (bbox[3] - bbox[1]) + 2
+                max_lineas = max(1, int((h - padding * 2) / line_height))
+
+                if len(lineas) > max_lineas:
+                    lineas = lineas[:max_lineas]
+                    if len(lineas[-1]) > 3:
+                        lineas[-1] = lineas[-1][:-3] + "..."
+
+                total_text_height = len(lineas) * line_height
+                ty = y + (h - total_text_height) / 2
+
+                for linea in lineas:
+                    bbox = draw.textbbox((0, 0), linea, font=font)
+                    text_w = bbox[2] - bbox[0]
+
+                    if align == "left":
+                        tx = x + padding
+                    else:
+                        tx = x + (w - text_w) / 2
+
+                    draw.text((tx, ty), linea, fill="black", font=font)
+                    ty += line_height
+
+
+            # ===== ENCABEZADO =====
+            headers = ["MÓDULO", "NOTA", "HORAS"]
+
+            columnas = [
+                (x_inicio, col_modulo_w),
+                (x_inicio + col_modulo_w, col_nota_w),
+                (x_inicio + col_modulo_w + col_nota_w, col_horas_w)
+            ]
+
+            for i, text in enumerate(headers):
+                x_col, w_col = columnas[i]
+
+                draw_back.rectangle(
+                    [x_col, y_inicio, x_col + w_col, y_inicio + alto_fila],
+                    outline="black",
+                    width=2
+                )
+
+                dibujar_texto_celda(
+                    draw_back,
+                    text,
+                    x_col,
+                    y_inicio,
+                    w_col,
+                    alto_fila,
+                    font_header,
+                    align="center"
+                )
+
+
+            # ===== FILAS =====
+            y = y_inicio + alto_fila
+
+            for m in modulos:
+                datos = [
+                    str(m["nombre"]),
+                    str(int(m["nota"])) if pd.notna(m["nota"]) else "",
+                    str(int(m["horas"])) if pd.notna(m["horas"]) else ""
+                ]
+
+                for i, text in enumerate(datos):
+                    x_col, w_col = columnas[i]
+
+                    draw_back.rectangle(
+                        [x_col, y, x_col + w_col, y + alto_fila],
+                        outline="black",
+                        width=1
+                    )
+
+                    if i == 0:
+                        dibujar_texto_celda(
+                            draw_back,
+                            text,
+                            x_col,
+                            y,
+                            w_col,
+                            alto_fila,
+                            font_tabla,
+                            align="center"
+                        )
+                    else:
+                        dibujar_texto_celda(
+                            draw_back,
+                            text,
+                            x_col,
+                            y,
+                            w_col,
+                            alto_fila,
+                            font_tabla,
+                            align="center"
+                        )
+
+                y += alto_fila
 
             # ===== CALCULAR PROMEDIO Y HORAS =====
             notas = []
@@ -1337,110 +1502,15 @@ def certificados_doble():
             for m in modulos:
                 if m["nota"] is not None and pd.notna(m["nota"]):
                     notas.append(float(m["nota"]))
+
                 if m["horas"] is not None and pd.notna(m["horas"]):
                     horas_lista.append(float(m["horas"]))
 
             promedio = round(sum(notas) / len(notas)) if len(notas) > 0 else 0
+
             total_horas = int(sum(horas_lista)) if len(horas_lista) > 0 else 0
+
             promedio_texto = numero_a_letras(promedio)
-
-            # TAMAÑO DE IMAGEN
-            ancho_img_back, alto_img_back = img_back.size
-
-            # ESPACIOS
-            margin_x = 40
-            margin_top = 80
-            margin_bottom = 180
-
-            # ÁREA DISPONIBLE
-            area_ancho = ancho_img_back - (margin_x * 2)
-            area_alto = alto_img_back - margin_top - margin_bottom
-
-            # COLUMNAS
-            col_modulo_w = int(area_ancho * 0.6)
-            col_nota_w = int(area_ancho * 0.2)
-            col_horas_w = int(area_ancho * 0.2)
-
-            # ALTURA DINÁMICA
-            total_filas = len(modulos) + 1
-            alto_fila = int(area_alto / total_filas) if total_filas > 0 else 40
-
-            # POSICIÓN INICIAL
-            x_inicio = margin_x
-            y_inicio = margin_top
-
-            # FUENTE TABLA
-            try:
-                font_tabla = ImageFont.truetype(ruta_fuente, 22)
-            except:
-                font_tabla = ImageFont.load_default()
-
-            # ===== ENCABEZADO =====
-            headers = ["MÓDULO", "NOTA", "HORAS"]
-
-            for i, text in enumerate(headers):
-                if i == 0:
-                    ancho_col = col_modulo_w
-                    x = x_inicio
-                elif i == 1:
-                    ancho_col = col_nota_w
-                    x = x_inicio + col_modulo_w
-                else:
-                    ancho_col = col_horas_w
-                    x = x_inicio + col_modulo_w + col_nota_w
-
-                bbox = draw_back.textbbox((0, 0), text, font=font_tabla)
-                text_w = bbox[2] - bbox[0]
-                text_h = bbox[3] - bbox[1]
-
-                tx = x + (ancho_col - text_w) / 2
-                ty = y_inicio + (alto_fila - text_h) / 2
-
-                draw_back.text((tx, ty), text, fill="black", font=font_tabla)
-
-                draw_back.rectangle(
-                    [x, y_inicio, x + ancho_col, y_inicio + alto_fila],
-                    outline="black",
-                    width=2
-                )
-
-            # ===== FILAS =====
-            y = y_inicio + alto_fila
-
-            for m in modulos:
-                datos = [
-                    str(m["nombre"]),
-                    str(m["nota"]),
-                    str(m["horas"])
-                ]
-
-                for i, text in enumerate(datos):
-                    if i == 0:
-                        ancho_col = col_modulo_w
-                        x = x_inicio
-                    elif i == 1:
-                        ancho_col = col_nota_w
-                        x = x_inicio + col_modulo_w
-                    else:
-                        ancho_col = col_horas_w
-                        x = x_inicio + col_modulo_w + col_nota_w
-
-                    bbox = draw_back.textbbox((0, 0), text, font=font_tabla)
-                    text_w = bbox[2] - bbox[0]
-                    text_h = bbox[3] - bbox[1]
-
-                    tx = x + (ancho_col - text_w) / 2
-                    ty = y + (alto_fila - text_h) / 2
-
-                    draw_back.text((tx, ty), text, fill="black", font=font_tabla)
-
-                    draw_back.rectangle(
-                        [x, y, x + ancho_col, y + alto_fila],
-                        outline="black",
-                        width=1
-                    )
-
-                y += alto_fila
 
             # ===== TEXTO FINAL =====
             try:
@@ -1470,7 +1540,7 @@ def certificados_doble():
 
             draw_back.text((x_label, y_label + 40), "TOTAL HORAS", fill="black", font=font_estilo_small)
             draw_back.text((x_dospuntos, y_label + 40), ":", fill="black", font=font_estilo_small)
-            draw_back.text((x_valor, y_label + 40), f"{total_horas} HORAS ACADÉMICAS", fill="black", font=font_estilo_small)
+            draw_back.text((x_valor, y_label + 40), f"{total_horas} HORAS ACADEMICAS", fill="black", font=font_estilo_small)
 
             # ===== FOTO DEL ALUMNO =====
             try:
@@ -1505,7 +1575,7 @@ def certificados_doble():
 
             # TAMAÑO INICIAL
             tamano_max = 65
-            tamano_min = 40
+            tamano_min = 28
             tamano_fuente = tamano_max
 
             # FUENTE
@@ -1519,7 +1589,7 @@ def certificados_doble():
                 bbox = draw.textbbox((0, 0), nombre, font=font)
                 ancho_texto = bbox[2] - bbox[0]
 
-                if ancho_texto <= ancho_img * 0.75:
+                if ancho_texto <= ancho_img * 0.82:
                     break
 
                 tamano_fuente -= 2
