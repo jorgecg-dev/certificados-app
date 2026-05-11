@@ -1332,30 +1332,30 @@ def certificados_doble():
 
             ancho_img_back, alto_img_back = img_back.size
 
+            # Márgenes de la tabla
             margin_x = 35
             margin_top = 75
-            margin_bottom = 260
+
+            # La tabla debe terminar antes del QR
+            limite_tabla_y = 535
+            area_alto = limite_tabla_y - margin_top
 
             area_ancho = ancho_img_back - (margin_x * 2)
-            area_alto = alto_img_back - margin_top - margin_bottom
-            limite_tabla_y = margin_top + area_alto
 
-            col_modulo_w = int(area_ancho * 0.62)
-            col_nota_w = int(area_ancho * 0.19)
+            col_modulo_w = int(area_ancho * 0.64)
+            col_nota_w = int(area_ancho * 0.18)
             col_horas_w = area_ancho - col_modulo_w - col_nota_w
 
             x_inicio = margin_x
             y_inicio = margin_top
 
-            # Fuente normal, sin negrita
-            ruta_fuente_normal = os.path.join(BASE_DIR, "DejaVuSans.ttf")
+            columnas = [
+                (x_inicio, col_modulo_w),
+                (x_inicio + col_modulo_w, col_nota_w),
+                (x_inicio + col_modulo_w + col_nota_w, col_horas_w)
+            ]
 
-            try:
-                font_tabla = ImageFont.truetype(ruta_fuente_normal, 13)
-                font_header = ImageFont.truetype(ruta_fuente, 15)
-            except:
-                font_tabla = ImageFont.load_default()
-                font_header = ImageFont.load_default()
+            ruta_fuente_normal = os.path.join(BASE_DIR, "DejaVuSerif-Bold.ttf")
 
 
             def dividir_texto_en_lineas(draw, texto, font, max_width):
@@ -1381,25 +1381,64 @@ def certificados_doble():
                 return lineas
 
 
-            def alto_necesario_para_texto(draw, texto, font, max_width, padding=4):
-                lineas = dividir_texto_en_lineas(draw, texto, font, max_width)
+            def calcular_alturas(font_tabla, font_header):
+                alto_header = 20
 
-                bbox = draw.textbbox((0, 0), "Ay", font=font)
+                bbox = draw_back.textbbox((0, 0), "Ay", font=font_tabla)
                 alto_linea = (bbox[3] - bbox[1]) + 3
 
-                return max(20, (len(lineas) * alto_linea) + (padding * 2)), lineas, alto_linea
+                alturas = []
+
+                for m in modulos:
+                    texto = str(m["nombre"])
+                    lineas = dividir_texto_en_lineas(
+                        draw_back,
+                        texto,
+                        font_tabla,
+                        col_modulo_w - 10
+                    )
+
+                    alto_fila = max(18, (len(lineas) * alto_linea) + 6)
+                    alturas.append(alto_fila)
+
+                total = alto_header + sum(alturas)
+
+                return total, alto_header, alturas, alto_linea
 
 
-            def dibujar_texto_celda(draw, texto, x, y, w, h, font, align="center"):
-                padding = 4
+            # Buscar tamaño de letra que permita mostrar TODOS los módulos
+            font_size = 13
+            font_min = 8
+
+            while True:
+                try:
+                    font_tabla = ImageFont.truetype(ruta_fuente_normal, font_size)
+                    font_header = ImageFont.truetype(ruta_fuente, font_size + 2)
+                except:
+                    font_tabla = ImageFont.load_default()
+                    font_header = ImageFont.load_default()
+
+                total_tabla, alto_header, alturas_filas, alto_linea = calcular_alturas(
+                    font_tabla,
+                    font_header
+                )
+
+                if total_tabla <= area_alto or font_size <= font_min:
+                    break
+
+                font_size -= 1
+
+
+            def dibujar_texto_celda(draw, texto, x, y, w, h, font, align="left"):
+                padding = 5
                 max_width = w - (padding * 2)
 
                 lineas = dividir_texto_en_lineas(draw, texto, font, max_width)
 
                 bbox = draw.textbbox((0, 0), "Ay", font=font)
-                alto_linea = (bbox[3] - bbox[1]) + 3
+                alto_linea_local = (bbox[3] - bbox[1]) + 3
 
-                total_alto_texto = len(lineas) * alto_linea
+                total_alto_texto = len(lineas) * alto_linea_local
                 ty = y + (h - total_alto_texto) / 2
 
                 for linea in lineas:
@@ -1412,18 +1451,10 @@ def certificados_doble():
                         tx = x + (w - ancho_linea) / 2
 
                     draw.text((tx, ty), linea, fill="black", font=font)
-                    ty += alto_linea
+                    ty += alto_linea_local
 
 
             # ===== ENCABEZADO =====
-            alto_header = 22
-
-            columnas = [
-                (x_inicio, col_modulo_w),
-                (x_inicio + col_modulo_w, col_nota_w),
-                (x_inicio + col_modulo_w + col_nota_w, col_horas_w)
-            ]
-
             headers = ["MÓDULO", "NOTA", "HORAS"]
 
             for i, text in enumerate(headers):
@@ -1446,26 +1477,15 @@ def certificados_doble():
                     align="center"
                 )
 
-            # ===== FILAS CON ALTURA VARIABLE =====
+
+            # ===== FILAS =====
             y = y_inicio + alto_header
 
-            for m in modulos:
-                texto_modulo = str(m["nombre"])
-
-                alto_modulo, lineas_modulo, alto_linea = alto_necesario_para_texto(
-                    draw_back,
-                    texto_modulo,
-                    font_tabla,
-                    col_modulo_w - 8
-                )
-
-                alto_fila = alto_modulo
-
-                if y + alto_fila > limite_tabla_y:
-                    alto_fila = limite_tabla_y - y
+            for idx, m in enumerate(modulos):
+                alto_fila = alturas_filas[idx]
 
                 datos = [
-                    texto_modulo,
+                    str(m["nombre"]),
                     str(int(m["nota"])) if pd.notna(m["nota"]) else "",
                     str(int(m["horas"])) if pd.notna(m["horas"]) else ""
                 ]
@@ -1479,20 +1499,30 @@ def certificados_doble():
                         width=1
                     )
 
-                    dibujar_texto_celda(
-                        draw_back,
-                        text,
-                        x_col,
-                        y,
-                        w_col,
-                        alto_fila,
-                        font_tabla,
-                        align="center"
-                    )
+                    if i == 0:
+                        dibujar_texto_celda(
+                            draw_back,
+                            text,
+                            x_col,
+                            y,
+                            w_col,
+                            alto_fila,
+                            font_tabla,
+                            align="left"
+                        )
+                    else:
+                        dibujar_texto_celda(
+                            draw_back,
+                            text,
+                            x_col,
+                            y,
+                            w_col,
+                            alto_fila,
+                            font_tabla,
+                            align="center"
+                        )
 
                 y += alto_fila
-                if y >= limite_tabla_y:
-                    break
 
             # ===== CALCULAR PROMEDIO Y HORAS =====
             notas = []
@@ -1531,7 +1561,7 @@ def certificados_doble():
             x_dospuntos = x_label + 200
             x_valor = x_dospuntos + 20
 
-            y_label = y + 40
+            y_label = y + 18
 
             draw_back.text((x_label, y_label), "PROMEDIO FINAL", fill="black", font=font_estilo_small)
             draw_back.text((x_dospuntos, y_label), ":", fill="black", font=font_estilo_small)
