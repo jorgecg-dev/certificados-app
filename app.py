@@ -1334,10 +1334,11 @@ def certificados_doble():
 
             margin_x = 35
             margin_top = 75
-            margin_bottom = 190
+            margin_bottom = 260
 
             area_ancho = ancho_img_back - (margin_x * 2)
             area_alto = alto_img_back - margin_top - margin_bottom
+            limite_tabla_y = margin_top + area_alto
 
             col_modulo_w = int(area_ancho * 0.62)
             col_nota_w = int(area_ancho * 0.19)
@@ -1460,6 +1461,9 @@ def certificados_doble():
 
                 alto_fila = alto_modulo
 
+                if y + alto_fila > limite_tabla_y:
+                    alto_fila = limite_tabla_y - y
+
                 datos = [
                     texto_modulo,
                     str(int(m["nota"])) if pd.notna(m["nota"]) else "",
@@ -1487,6 +1491,8 @@ def certificados_doble():
                     )
 
                 y += alto_fila
+                if y >= limite_tabla_y:
+                    break
 
             # ===== CALCULAR PROMEDIO Y HORAS =====
             notas = []
@@ -1537,18 +1543,27 @@ def certificados_doble():
 
             # ===== FOTO DEL ALUMNO =====
             try:
-                ruta_foto = f"fotos/{a['dni']}.jpeg"
-
-                # TAMAÑO
                 ancho_foto = 120
                 alto_foto = 150
 
-                # POSICIÓN (SE MANTIENE)
                 pos_x = 40
                 pos_y = 550
 
-                if os.path.exists(ruta_foto):
-                    foto = Image.open(ruta_foto).convert("RGB")
+                dni_foto = str(a["dni"]).strip()
+
+                extensiones = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
+
+                ruta_foto_encontrada = None
+
+                for ext in extensiones:
+                    posible_ruta = os.path.join(BASE_DIR, "fotos", dni_foto + ext)
+
+                    if os.path.exists(posible_ruta):
+                        ruta_foto_encontrada = posible_ruta
+                        break
+
+                if ruta_foto_encontrada:
+                    foto = Image.open(ruta_foto_encontrada).convert("RGB")
                     foto = foto.resize((ancho_foto, alto_foto))
                     img.paste(foto, (pos_x, pos_y))
                 else:
@@ -1557,8 +1572,9 @@ def certificados_doble():
                         outline=(0, 0, 0),
                         width=2
                     )
-            except:
-                pass
+
+            except Exception as e:
+                print("Error colocando foto:", e)
 
             # ===== TEXTO NOMBRE FRONTAL =====
             nombre = str(a["nombre"])
