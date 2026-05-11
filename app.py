@@ -1658,11 +1658,11 @@ def certificados_doble():
             draw.text((x, y), nombre, fill=(20, 20, 20), font=font)
 
             # GUARDAR JPGS
-            ruta_salida = f"salida/{a['dni']}_frontal.jpg"
-            img.save(ruta_salida)
+            ruta_salida = f"salida/{a['dni']}_frontal.png"
+            img.save(ruta_salida, "PNG")
 
-            ruta_salida_back = f"salida/{a['dni']}_trasero.jpg"
-            img_back.save(ruta_salida_back)
+            ruta_salida_back = f"salida/{a['dni']}_trasero.png"
+            img_back.save(ruta_salida_back, "PNG")
 
         # PDF FRONTALES
         img_temp = Image.open(ruta_frontal)
@@ -1670,7 +1670,7 @@ def certificados_doble():
         pdf_frontal = canvas.Canvas("salida/frontales.pdf", pagesize=(ancho, alto))
 
         for a in alumnos:
-            ruta = f"salida/{a['dni']}_frontal.jpg"
+            ruta = f"salida/{a['dni']}_frontal.png"
             pdf_frontal.drawImage(ruta, 0, 0, width=ancho, height=alto)
             pdf_frontal.showPage()
 
@@ -1682,7 +1682,7 @@ def certificados_doble():
         pdf_trasero = canvas.Canvas("salida/traseros.pdf", pagesize=(ancho, alto))
 
         for a in alumnos:
-            ruta = f"salida/{a['dni']}_trasero.jpg"
+            ruta = f"salida/{a['dni']}_trasero.png"
             pdf_trasero.drawImage(ruta, 0, 0, width=ancho, height=alto)
             pdf_trasero.showPage()
 
@@ -1690,8 +1690,8 @@ def certificados_doble():
 
         # LIMPIAR JPGS TEMPORALES
         for a in alumnos:
-            ruta_f = f"salida/{a['dni']}_frontal.jpg"
-            ruta_b = f"salida/{a['dni']}_trasero.jpg"
+            ruta_f = f"salida/{a['dni']}_frontal.png"
+            ruta_b = f"salida/{a['dni']}_trasero.png"
 
             if os.path.exists(ruta_f):
                 os.remove(ruta_f)
